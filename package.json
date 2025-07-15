@@ -1,0 +1,26 @@
+{
+  "name": "dropout-fools-gold-tracker",
+  "version": "1.0.0",
+  "description": "A modern, responsive web application for tracking YouTube and TikTok shorts views with interactive charts and group analytics",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext js,html --report-unused-disable-directives --max-warnings 0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "eslint": "^8.55.0"
+  },
+  "keywords": [
+    "youtube",
+    "tiktok",
+    "analytics",
+    "tracking",
+    "charts",
+    "shorts"
+  ],
+  "author": "",
+  "license": "MIT"
+} 
