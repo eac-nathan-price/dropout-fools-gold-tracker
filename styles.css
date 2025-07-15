@@ -231,6 +231,14 @@ body {
     flex: 1;
 }
 
+.total-views-display {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #ffd700;
+    text-align: right;
+    min-width: 80px;
+}
+
 /* Producer Bubbles */
 .producer-bubbles {
     display: flex;

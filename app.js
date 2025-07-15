@@ -171,25 +171,12 @@ class ProducerTracker {
         container.innerHTML = `
             <div class="chart-header">
                 <div class="chart-title">${video.title}</div>
+                <div class="total-views-display">${formatNumber(getLatestTotalViews(video))}</div>
             </div>
             <div class="producer-bubbles">
                 ${producerBubbles}
             </div>
             <canvas id="chart-${video.id}" width="400" height="200"></canvas>
-            <div class="chart-stats">
-                <div class="stat-item">
-                    <div class="stat-value">${formatNumber(getLatestTotalViews(video))}</div>
-                    <div class="stat-label">Latest Total</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${formatNumber(getTotalViews(video))}</div>
-                    <div class="stat-label">Total Views</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${video.producers.length}</div>
-                    <div class="stat-label">Producers</div>
-                </div>
-            </div>
         `;
         return container;
     }
@@ -206,6 +193,9 @@ class ProducerTracker {
         // Create stacked area chart for YouTube and TikTok
         const youtubeData = video.youtubeViews.map(view => view.count);
         const tiktokData = video.tiktokViews.map(view => view.count);
+
+        // Calculate total views for each date
+        const totalData = youtubeData.map((youtube, index) => youtube + tiktokData[index]);
 
         const chart = new Chart(ctx, {
             type: 'line',
@@ -239,6 +229,20 @@ class ProducerTracker {
                         pointBorderWidth: 1,
                         pointRadius: 3,
                         pointHoverRadius: 5
+                    },
+                    {
+                        label: 'Total',
+                        data: totalData,
+                        borderColor: '#ffd700',
+                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                        borderWidth: 3,
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffd700',
+                        pointBorderColor: '#1a1a1a',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6
                     }
                 ]
             },
