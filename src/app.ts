@@ -203,6 +203,8 @@ class ProducerTracker {
             const crownElement = isWinner ? '<div class="crown">👑</div>' : '';
             const stinkLines = isLoser ? '<div class="stink-lines"><svg class="stink-line left" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg><svg class="stink-line center" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg><svg class="stink-line right" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg></div>' : '';
             
+            const videoText = producer.stats.videoCount === 1 ? 'Video' : 'Videos';
+            
             producerCard.innerHTML = `
                 <div class="producer-card">
                     <div class="producer-profile">
@@ -214,10 +216,13 @@ class ProducerTracker {
                     <div class="producer-info">
                         <div class="producer-name">${producer.fullName}</div>
                         <div class="producer-total">${formatNumber(producer.stats.total)} Views</div>
-                        <div class="producer-video-count">${producer.stats.videoCount} Videos</div>
                         <div class="producer-breakdown">
                             <span class="youtube-count">YT: ${formatNumber(producer.stats.youtube)}</span>
                             <span class="tiktok-count">TT: ${formatNumber(producer.stats.tiktok)}</span>
+                        </div>
+                        <div class="producer-video-line">
+                            <span class="producer-video-count">${producer.stats.videoCount} ${videoText}</span>
+                            <span class="producer-solo-count">${producer.stats.soloVideoCount} Solo</span>
                         </div>
                     </div>
                 </div>
@@ -238,10 +243,14 @@ class ProducerTracker {
         let youtubeTotal = 0;
         let tiktokTotal = 0;
         let videoCount = 0;
+        let soloVideoCount = 0;
         
         videoData.forEach(video => {
             if (video.producers.includes(producerId)) {
                 videoCount++;
+                if (video.producers.length === 1) {
+                    soloVideoCount++;
+                }
                 const sharePercentage = 1 / video.producers.length;
                 
                 if (this.currentPlatform === 'youtube' || this.currentPlatform === 'all') {
@@ -264,7 +273,8 @@ class ProducerTracker {
             total: Math.round(youtubeTotal + tiktokTotal),
             youtube: Math.round(youtubeTotal),
             tiktok: Math.round(tiktokTotal),
-            videoCount: videoCount
+            videoCount: videoCount,
+            soloVideoCount: soloVideoCount
         };
     }
 
