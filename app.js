@@ -1,207 +1,193 @@
-// Main application logic
-class ShortsTracker {
+// Main application logic for Producer Performance Tracker
+class ProducerTracker {
     constructor() {
-        this.currentTab = 'individual';
-        this.filters = {
-            platform: 'all',
-            tag: 'all'
-        };
-        this.charts = new Map();
+        this.currentPlatform = 'all';
+        this.producerChart = null;
+        this.videoCharts = new Map();
         
         this.init();
     }
 
     init() {
         this.setupEventListeners();
-        this.populateFilters();
         this.updateLastUpdated();
-        this.renderCurrentTab();
+        this.renderProducerComparisonChart();
+        this.renderVideoCharts();
     }
 
     setupEventListeners() {
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                this.switchTab(e.target.dataset.tab);
+        // Platform filter for producer comparison
+        document.getElementById('platform-filter').addEventListener('change', (e) => {
+            this.currentPlatform = e.target.value;
+            this.renderProducerComparisonChart();
+        });
+
+        // Producer legend click handlers
+        document.querySelectorAll('.legend-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const producerId = e.currentTarget.dataset.producer;
+                this.toggleProducerVisibility(producerId);
             });
         });
+    }
 
-        // Individual video filters
-        document.getElementById('platform-filter').addEventListener('change', (e) => {
-            this.filters.platform = e.target.value;
-            this.renderIndividualVideos();
+    renderProducerComparisonChart() {
+        const ctx = document.getElementById('producer-comparison-chart');
+        if (!ctx) return;
+
+        // Destroy existing chart if it exists
+        if (this.producerChart) {
+            this.producerChart.destroy();
+        }
+
+        const dates = getAllDates();
+        const labels = dates.map(date => {
+            const d = new Date(date);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         });
 
-        document.getElementById('tag-filter').addEventListener('change', (e) => {
-            this.filters.tag = e.target.value;
-            this.renderIndividualVideos();
+        // Create datasets for each producer
+        const datasets = producers.map(producer => {
+            const data = dates.map(date => getProducerViewsForDate(producer.id, date, this.currentPlatform));
+            
+            return {
+                label: producer.name,
+                data: data,
+                borderColor: producer.color,
+                backgroundColor: producer.color + '20', // 20% opacity
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: producer.color,
+                pointBorderColor: '#1a1a1a',
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 8
+            };
         });
 
-        // Group filters
-        document.getElementById('group-platform-filter').addEventListener('change', (e) => {
-            this.filters.groupPlatform = e.target.value;
-            this.renderGroupCharts();
+        this.producerChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false // We have our custom legend
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#2d2d2d',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#ffd700',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                const producer = producers.find(p => p.name === context.dataset.label);
+                                return `${producer.name}: ${formatNumber(context.parsed.y)} views`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: '#333333'
+                        },
+                        ticks: {
+                            color: '#cccccc',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: '#333333'
+                        },
+                        ticks: {
+                            color: '#cccccc',
+                            callback: function(value) {
+                                return formatNumber(value);
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    mode: 'nearest',
+                    axis: 'x',
+                    intersect: false
+                }
+            }
         });
     }
 
-    switchTab(tabName) {
-        // Update active tab button
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.classList.toggle('active', btn.dataset.tab === tabName);
-        });
-
-        // Update active tab content
-        document.querySelectorAll('.tab-content').forEach(content => {
-            content.classList.toggle('active', content.id === tabName);
-        });
-
-        this.currentTab = tabName;
-        this.renderCurrentTab();
-    }
-
-    populateFilters() {
-        // Populate tag filter
-        const tagFilter = document.getElementById('tag-filter');
-        const tags = getAllTags();
+    toggleProducerVisibility(producerId) {
+        const legendItem = document.querySelector(`[data-producer="${producerId}"]`);
+        const isHidden = legendItem.classList.contains('hidden');
         
-        tags.forEach(tag => {
-            const option = document.createElement('option');
-            option.value = tag;
-            option.textContent = tag.charAt(0).toUpperCase() + tag.slice(1);
-            tagFilter.appendChild(option);
-        });
-    }
-
-    renderCurrentTab() {
-        if (this.currentTab === 'individual') {
-            this.renderIndividualVideos();
+        if (isHidden) {
+            legendItem.classList.remove('hidden');
+            this.producerChart.show(producerId);
         } else {
-            this.renderGroupCharts();
+            legendItem.classList.add('hidden');
+            this.producerChart.hide(producerId);
         }
     }
 
-    renderIndividualVideos() {
-        const container = document.getElementById('individual-charts');
-        const filteredVideos = this.getFilteredVideos();
-        
-        if (filteredVideos.length === 0) {
-            container.innerHTML = '<div class="loading">No videos found with current filters</div>';
-            return;
-        }
-
+    renderVideoCharts() {
+        const container = document.getElementById('video-charts-grid');
         container.innerHTML = '';
         
-        filteredVideos.forEach(video => {
+        videoData.forEach(video => {
             const chartContainer = this.createVideoChartContainer(video);
             container.appendChild(chartContainer);
         });
 
         // Render charts after DOM elements are created
         setTimeout(() => {
-            filteredVideos.forEach(video => {
+            videoData.forEach(video => {
                 this.renderVideoChart(video);
             });
         }, 100);
     }
 
-    renderGroupCharts() {
-        const container = document.getElementById('group-charts');
-        const platformFilter = this.filters.groupPlatform || 'all';
-        
-        // Get all unique tags
-        const tags = getAllTags();
-        const filteredTags = tags.filter(tag => {
-            if (platformFilter === 'all') return true;
-            return videoData.some(video => 
-                video.platform === platformFilter && video.tags.includes(tag)
-            );
-        });
-
-        if (filteredTags.length === 0) {
-            container.innerHTML = '<div class="loading">No groups found with current filters</div>';
-            return;
-        }
-
-        container.innerHTML = '';
-        
-        filteredTags.forEach(tag => {
-            const chartContainer = this.createGroupChartContainer(tag);
-            container.appendChild(chartContainer);
-        });
-
-        // Render charts after DOM elements are created
-        setTimeout(() => {
-            filteredTags.forEach(tag => {
-                this.renderGroupChart(tag);
-            });
-        }, 100);
-    }
-
-    getFilteredVideos() {
-        return videoData.filter(video => {
-            if (this.filters.platform !== 'all' && video.platform !== this.filters.platform) {
-                return false;
-            }
-            if (this.filters.tag !== 'all' && !video.tags.includes(this.filters.tag)) {
-                return false;
-            }
-            return true;
-        });
-    }
-
     createVideoChartContainer(video) {
         const container = document.createElement('div');
         container.className = 'chart-container';
+        
+        // Create producer bubbles
+        const producerBubbles = video.producers.map(producerId => {
+            const producer = getProducerById(producerId);
+            return `<span class="producer-bubble" style="background: ${producer.color};">${producer.name}</span>`;
+        }).join('');
+
         container.innerHTML = `
             <div class="chart-header">
-                <div>
-                    <div class="chart-title">${video.title}</div>
-                    <div class="tags">
-                        ${video.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                    </div>
-                </div>
-                <span class="platform-badge ${video.platform}">${video.platform}</span>
+                <div class="chart-title">${video.title}</div>
+            </div>
+            <div class="producer-bubbles">
+                ${producerBubbles}
             </div>
             <canvas id="chart-${video.id}" width="400" height="200"></canvas>
             <div class="chart-stats">
                 <div class="stat-item">
-                    <div class="stat-value">${formatNumber(getLatestViews(video))}</div>
-                    <div class="stat-label">Latest Views</div>
+                    <div class="stat-value">${formatNumber(getLatestTotalViews(video))}</div>
+                    <div class="stat-label">Latest Total</div>
                 </div>
                 <div class="stat-item">
                     <div class="stat-value">${formatNumber(getTotalViews(video))}</div>
                     <div class="stat-label">Total Views</div>
                 </div>
                 <div class="stat-item">
-                    <div class="stat-value">${formatNumber(getAverageGrowth(video))}</div>
-                    <div class="stat-label">Avg Daily Growth</div>
-                </div>
-            </div>
-        `;
-        return container;
-    }
-
-    createGroupChartContainer(tag) {
-        const container = document.createElement('div');
-        container.className = 'chart-container';
-        container.innerHTML = `
-            <div class="chart-header">
-                <div>
-                    <div class="chart-title">${tag.charAt(0).toUpperCase() + tag.slice(1)} Group</div>
-                    <div class="tags">
-                        <span class="tag">${tag}</span>
-                    </div>
-                </div>
-            </div>
-            <canvas id="group-chart-${tag}" width="400" height="200"></canvas>
-            <div class="chart-stats">
-                <div class="stat-item">
-                    <div class="stat-value" id="group-total-${tag}">-</div>
-                    <div class="stat-label">Total Views</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="group-videos-${tag}">-</div>
-                    <div class="stat-label">Videos</div>
+                    <div class="stat-value">${video.producers.length}</div>
+                    <div class="stat-label">Producers</div>
                 </div>
             </div>
         `;
@@ -212,38 +198,62 @@ class ShortsTracker {
         const ctx = document.getElementById(`chart-${video.id}`);
         if (!ctx) return;
 
-        const labels = video.views.map(view => {
+        const labels = video.youtubeViews.map(view => {
             const date = new Date(view.date);
             return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         });
 
-        const data = video.views.map(view => view.count);
+        // Create stacked area chart for YouTube and TikTok
+        const youtubeData = video.youtubeViews.map(view => view.count);
+        const tiktokData = video.tiktokViews.map(view => view.count);
 
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: labels,
-                datasets: [{
-                    label: 'Views',
-                    data: data,
-                    borderColor: video.platform === 'youtube' ? '#ff0000' : '#ffffff',
-                    backgroundColor: video.platform === 'youtube' ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: video.platform === 'youtube' ? '#ff0000' : '#ffffff',
-                    pointBorderColor: '#1a1a1a',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
+                datasets: [
+                    {
+                        label: 'YouTube',
+                        data: youtubeData,
+                        borderColor: '#ff0000',
+                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ff0000',
+                        pointBorderColor: '#1a1a1a',
+                        pointBorderWidth: 1,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    },
+                    {
+                        label: 'TikTok',
+                        data: tiktokData,
+                        borderColor: '#ffffff',
+                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: '#1a1a1a',
+                        pointBorderWidth: 1,
+                        pointRadius: 3,
+                        pointHoverRadius: 5
+                    }
+                ]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: {
-                        display: false
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#cccccc',
+                            usePointStyle: true,
+                            padding: 15
+                        }
                     },
                     tooltip: {
                         mode: 'index',
@@ -255,7 +265,7 @@ class ShortsTracker {
                         borderWidth: 1,
                         callbacks: {
                             label: function(context) {
-                                return `Views: ${formatNumber(context.parsed.y)}`;
+                                return `${context.dataset.label}: ${formatNumber(context.parsed.y)} views`;
                             }
                         }
                     }
@@ -268,7 +278,7 @@ class ShortsTracker {
                         ticks: {
                             color: '#cccccc',
                             font: {
-                                size: 11
+                                size: 10
                             }
                         }
                     },
@@ -292,122 +302,7 @@ class ShortsTracker {
             }
         });
 
-        this.charts.set(video.id, chart);
-    }
-
-    renderGroupChart(tag) {
-        const ctx = document.getElementById(`group-chart-${tag}`);
-        if (!ctx) return;
-
-        // Get all videos with this tag
-        const platformFilter = this.filters.groupPlatform || 'all';
-        const groupVideos = videoData.filter(video => {
-            if (!video.tags.includes(tag)) return false;
-            if (platformFilter !== 'all' && video.platform !== platformFilter) return false;
-            return true;
-        });
-
-        if (groupVideos.length === 0) return;
-
-        // Get all unique dates from all videos in the group
-        const allDates = new Set();
-        groupVideos.forEach(video => {
-            video.views.forEach(view => allDates.add(view.date));
-        });
-
-        const sortedDates = Array.from(allDates).sort();
-        const labels = sortedDates.map(date => {
-            const d = new Date(date);
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        });
-
-        // Calculate aggregated views for each date
-        const aggregatedData = sortedDates.map(date => {
-            return groupVideos.reduce((sum, video) => {
-                const viewData = video.views.find(v => v.date === date);
-                return sum + (viewData ? viewData.count : 0);
-            }, 0);
-        });
-
-        // Update stats
-        const totalViews = aggregatedData[aggregatedData.length - 1] || 0;
-        document.getElementById(`group-total-${tag}`).textContent = formatNumber(totalViews);
-        document.getElementById(`group-videos-${tag}`).textContent = groupVideos.length;
-
-        const chart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'Total Views',
-                    data: aggregatedData,
-                    borderColor: '#ffd700',
-                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                    borderWidth: 3,
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#ffd700',
-                    pointBorderColor: '#1a1a1a',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: '#2d2d2d',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        borderColor: '#ffd700',
-                        borderWidth: 1,
-                        callbacks: {
-                            label: function(context) {
-                                return `Total Views: ${formatNumber(context.parsed.y)}`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            color: '#cccccc',
-                            font: {
-                                size: 11
-                            }
-                        }
-                    },
-                    y: {
-                        grid: {
-                            color: '#333333'
-                        },
-                        ticks: {
-                            color: '#cccccc',
-                            callback: function(value) {
-                                return formatNumber(value);
-                            }
-                        }
-                    }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
-                }
-            }
-        });
-
-        this.charts.set(`group-${tag}`, chart);
+        this.videoCharts.set(video.id, chart);
     }
 
     updateLastUpdated() {
@@ -425,5 +320,5 @@ class ShortsTracker {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new ShortsTracker();
+    new ProducerTracker();
 }); 

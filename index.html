@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shorts Tracker - View Analytics</title>
+    <title>Producer Performance Tracker</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -11,58 +11,55 @@
 <body>
     <div class="container">
         <header class="header">
-            <h1>📊 Shorts Tracker</h1>
+            <h1>📊 Producer Performance Tracker</h1>
             <p>YouTube & TikTok View Analytics</p>
         </header>
 
-        <nav class="nav-tabs">
-            <button class="tab-btn active" data-tab="individual">Individual Videos</button>
-            <button class="tab-btn" data-tab="groups">Group Analytics</button>
-        </nav>
-
-        <main class="main-content">
-            <!-- Individual Videos Tab -->
-            <div id="individual" class="tab-content active">
-                <div class="controls">
-                    <div class="filter-group">
+        <!-- Main Producer Comparison Chart -->
+        <section class="producer-comparison">
+            <div class="chart-card large">
+                <div class="chart-header">
+                    <h2>Producer Performance Comparison</h2>
+                    <div class="chart-controls">
                         <label for="platform-filter">Platform:</label>
                         <select id="platform-filter">
                             <option value="all">All Platforms</option>
-                            <option value="youtube">YouTube</option>
-                            <option value="tiktok">TikTok</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label for="tag-filter">Tag:</label>
-                        <select id="tag-filter">
-                            <option value="all">All Tags</option>
+                            <option value="youtube">YouTube Only</option>
+                            <option value="tiktok">TikTok Only</option>
                         </select>
                     </div>
                 </div>
-                
-                <div id="individual-charts" class="charts-grid">
-                    <!-- Individual video charts will be rendered here -->
+                <div class="chart-container-large">
+                    <canvas id="producer-comparison-chart"></canvas>
+                </div>
+                <div class="producer-legend">
+                    <div class="legend-item" data-producer="producer_1">
+                        <span class="legend-color" style="background: #ff6b6b;"></span>
+                        <span class="legend-name">Producer Alpha</span>
+                    </div>
+                    <div class="legend-item" data-producer="producer_2">
+                        <span class="legend-color" style="background: #4ecdc4;"></span>
+                        <span class="legend-name">Producer Beta</span>
+                    </div>
+                    <div class="legend-item" data-producer="producer_3">
+                        <span class="legend-color" style="background: #45b7d1;"></span>
+                        <span class="legend-name">Producer Gamma</span>
+                    </div>
+                    <div class="legend-item" data-producer="producer_4">
+                        <span class="legend-color" style="background: #96ceb4;"></span>
+                        <span class="legend-name">Producer Delta</span>
+                    </div>
                 </div>
             </div>
+        </section>
 
-            <!-- Group Analytics Tab -->
-            <div id="groups" class="tab-content">
-                <div class="controls">
-                    <div class="filter-group">
-                        <label for="group-platform-filter">Platform:</label>
-                        <select id="group-platform-filter">
-                            <option value="all">All Platforms</option>
-                            <option value="youtube">YouTube</option>
-                            <option value="tiktok">TikTok</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div id="group-charts" class="charts-grid">
-                    <!-- Group charts will be rendered here -->
-                </div>
+        <!-- Individual Video Charts -->
+        <section class="video-charts">
+            <h2>Individual Video Performance</h2>
+            <div id="video-charts-grid" class="charts-grid">
+                <!-- Individual video charts will be rendered here -->
             </div>
-        </main>
+        </section>
 
         <footer class="footer">
             <p>Last updated: <span id="last-updated">Loading...</span></p>
