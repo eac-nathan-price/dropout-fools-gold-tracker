@@ -226,13 +226,13 @@ class ShortsTracker {
                 datasets: [{
                     label: 'Views',
                     data: data,
-                    borderColor: video.platform === 'youtube' ? '#ff0000' : '#000000',
-                    backgroundColor: video.platform === 'youtube' ? 'rgba(255, 0, 0, 0.1)' : 'rgba(0, 0, 0, 0.1)',
+                    borderColor: video.platform === 'youtube' ? '#ff0000' : '#ffffff',
+                    backgroundColor: video.platform === 'youtube' ? 'rgba(255, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: video.platform === 'youtube' ? '#ff0000' : '#000000',
-                    pointBorderColor: '#fff',
+                    pointBackgroundColor: video.platform === 'youtube' ? '#ff0000' : '#ffffff',
+                    pointBorderColor: '#1a1a1a',
                     pointBorderWidth: 2,
                     pointRadius: 4,
                     pointHoverRadius: 6
@@ -248,6 +248,11 @@ class ShortsTracker {
                     tooltip: {
                         mode: 'index',
                         intersect: false,
+                        backgroundColor: '#2d2d2d',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#ffd700',
+                        borderWidth: 1,
                         callbacks: {
                             label: function(context) {
                                 return `Views: ${formatNumber(context.parsed.y)}`;
@@ -261,7 +266,7 @@ class ShortsTracker {
                             display: false
                         },
                         ticks: {
-                            color: '#666',
+                            color: '#cccccc',
                             font: {
                                 size: 11
                             }
@@ -269,10 +274,10 @@ class ShortsTracker {
                     },
                     y: {
                         grid: {
-                            color: '#f0f0f0'
+                            color: '#333333'
                         },
                         ticks: {
-                            color: '#666',
+                            color: '#cccccc',
                             callback: function(value) {
                                 return formatNumber(value);
                             }
@@ -336,13 +341,13 @@ class ShortsTracker {
                 datasets: [{
                     label: 'Total Views',
                     data: aggregatedData,
-                    borderColor: '#667eea',
-                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    borderColor: '#ffd700',
+                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
                     borderWidth: 3,
                     fill: true,
                     tension: 0.4,
-                    pointBackgroundColor: '#667eea',
-                    pointBorderColor: '#fff',
+                    pointBackgroundColor: '#ffd700',
+                    pointBorderColor: '#1a1a1a',
                     pointBorderWidth: 2,
                     pointRadius: 4,
                     pointHoverRadius: 6
@@ -358,6 +363,11 @@ class ShortsTracker {
                     tooltip: {
                         mode: 'index',
                         intersect: false,
+                        backgroundColor: '#2d2d2d',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#ffd700',
+                        borderWidth: 1,
                         callbacks: {
                             label: function(context) {
                                 return `Total Views: ${formatNumber(context.parsed.y)}`;
@@ -371,7 +381,7 @@ class ShortsTracker {
                             display: false
                         },
                         ticks: {
-                            color: '#666',
+                            color: '#cccccc',
                             font: {
                                 size: 11
                             }
@@ -379,10 +389,10 @@ class ShortsTracker {
                     },
                     y: {
                         grid: {
-                            color: '#f0f0f0'
+                            color: '#333333'
                         },
                         ticks: {
-                            color: '#666',
+                            color: '#cccccc',
                             callback: function(value) {
                                 return formatNumber(value);
                             }
