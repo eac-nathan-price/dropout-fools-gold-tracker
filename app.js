@@ -165,7 +165,7 @@ class ProducerTracker {
         // Create producer bubbles
         const producerBubbles = video.producers.map(producerId => {
             const producer = getProducerById(producerId);
-            return `<span class="producer-bubble" style="background: ${producer.color};">${producer.name}</span>`;
+            return `<span class="producer-bubble" style="background: ${producer.color};"><span class="producer-icon">👤</span>${producer.name}</span>`;
         }).join('');
 
         container.innerHTML = `
@@ -173,10 +173,10 @@ class ProducerTracker {
                 <div class="chart-title">${video.title}</div>
                 <div class="total-views-display">${formatNumber(getLatestTotalViews(video))}</div>
             </div>
+            <canvas id="chart-${video.id}" width="400" height="200"></canvas>
             <div class="producer-bubbles">
                 ${producerBubbles}
             </div>
-            <canvas id="chart-${video.id}" width="400" height="200"></canvas>
         `;
         return container;
     }
