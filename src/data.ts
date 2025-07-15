@@ -2,7 +2,27 @@
 // Each video is posted on both YouTube and TikTok
 // Some videos are shared between multiple producers
 
-const producers = [
+export interface Producer {
+    id: string;
+    name: string;
+    fullName: string;
+    color: string;
+}
+
+export interface View {
+    date: string;
+    count: number;
+}
+
+export interface Video {
+    id: string;
+    title: string;
+    producers: string[];
+    youtubeViews: View[];
+    tiktokViews: View[];
+}
+
+export const producers: Producer[] = [
     {
         id: "producer_1",
         name: "Trapp",
@@ -29,7 +49,7 @@ const producers = [
     }
 ];
 
-const videoData = [
+export const videoData: Video[] = [
     {
         id: "video_001",
         title: "Peel Robalino",
@@ -163,8 +183,8 @@ const videoData = [
 ];
 
 // Helper function to get all unique dates from all videos
-function getAllDates() {
-    const allDates = new Set();
+export function getAllDates(): string[] {
+    const allDates = new Set<string>();
     videoData.forEach(video => {
         video.youtubeViews.forEach(view => allDates.add(view.date));
         video.tiktokViews.forEach(view => allDates.add(view.date));
@@ -173,12 +193,12 @@ function getAllDates() {
 }
 
 // Helper function to get producer by ID
-function getProducerById(id) {
+export function getProducerById(id: string): Producer | undefined {
     return producers.find(producer => producer.id === id);
 }
 
 // Helper function to calculate producer views for a specific date and platform
-function getProducerViewsForDate(producerId, date, platform = 'all') {
+export function getProducerViewsForDate(producerId: string, date: string, platform: 'youtube' | 'tiktok' | 'all' = 'all'): number {
     let totalViews = 0;
     
     videoData.forEach(video => {
@@ -205,7 +225,7 @@ function getProducerViewsForDate(producerId, date, platform = 'all') {
 }
 
 // Helper function to format numbers with K, M, B suffixes
-function formatNumber(num) {
+export function formatNumber(num: number): string {
     if (num >= 1000000000) {
         return (num / 1000000000).toFixed(1) + 'B';
     } else if (num >= 1000000) {
@@ -217,14 +237,14 @@ function formatNumber(num) {
 }
 
 // Helper function to get latest total views for a video
-function getLatestTotalViews(video) {
+export function getLatestTotalViews(video: Video): number {
     const latestYoutube = video.youtubeViews[video.youtubeViews.length - 1]?.count || 0;
     const latestTiktok = video.tiktokViews[video.tiktokViews.length - 1]?.count || 0;
     return latestYoutube + latestTiktok;
 }
 
 // Helper function to get total views for a video
-function getTotalViews(video) {
+export function getTotalViews(video: Video): number {
     const youtubeTotal = video.youtubeViews.reduce((sum, view) => sum + view.count, 0);
     const tiktokTotal = video.tiktokViews.reduce((sum, view) => sum + view.count, 0);
     return youtubeTotal + tiktokTotal;

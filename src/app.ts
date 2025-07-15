@@ -1,5 +1,24 @@
 // Main application logic for Producer Performance Tracker
+import Chart from 'chart.js/auto';
+import 'chartjs-adapter-date-fns';
+import {
+    producers,
+    videoData,
+    getAllDates,
+    getProducerById,
+    getProducerViewsForDate,
+    formatNumber,
+    getLatestTotalViews,
+    getTotalViews,
+    Producer,
+    Video
+} from './data';
+
 class ProducerTracker {
+    currentPlatform: string;
+    producerChart: Chart<'line', { x: number | string | Date; y: number; }[], unknown> | null;
+    videoCharts: Map<string, Chart<'line', { x: number | string | Date; y: number; }[], unknown>>;
+
     constructor() {
         this.currentPlatform = 'all';
         this.producerChart = null;
@@ -18,23 +37,30 @@ class ProducerTracker {
 
     setupEventListeners() {
         // Platform filter for producer comparison
-        document.getElementById('platform-filter').addEventListener('change', (e) => {
-            this.currentPlatform = e.target.value;
-            this.renderProducerComparisonChart();
-            this.renderProducerStats();
-        });
+        const platformFilter = document.getElementById('platform-filter') as HTMLSelectElement | null;
+        if (platformFilter) {
+            platformFilter.addEventListener('change', (e: Event) => {
+                const target = e.target as HTMLSelectElement;
+                this.currentPlatform = target.value;
+                this.renderProducerComparisonChart();
+                this.renderProducerStats();
+            });
+        }
 
         // Producer legend click handlers
         document.querySelectorAll('.legend-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                const producerId = e.currentTarget.dataset.producer;
-                this.toggleProducerVisibility(producerId);
+            item.addEventListener('click', (e: Event) => {
+                const currentTarget = e.currentTarget as HTMLElement | null;
+                if (currentTarget && currentTarget.dataset.producer) {
+                    const producerId = currentTarget.dataset.producer;
+                    this.toggleProducerVisibility(producerId);
+                }
             });
         });
     }
 
     renderProducerComparisonChart() {
-        const ctx = document.getElementById('producer-comparison-chart');
+        const ctx = document.getElementById('producer-comparison-chart') as HTMLCanvasElement | null;
         if (!ctx) return;
 
         // Destroy existing chart if it exists
@@ -48,7 +74,7 @@ class ProducerTracker {
         const datasets = producers.map(producer => {
             const data = dates.map(date => ({
                 x: new Date(date),
-                y: getProducerViewsForDate(producer.id, date, this.currentPlatform)
+                y: getProducerViewsForDate(producer.id, date, this.currentPlatform as 'all' | 'youtube' | 'tiktok')
             }));
             
             return {
@@ -70,7 +96,7 @@ class ProducerTracker {
         this.producerChart = new Chart(ctx, {
             type: 'line',
             data: {
-                datasets: datasets
+                datasets: datasets as any // Chart.js expects a certain structure
             },
             options: {
                 responsive: true,
@@ -88,7 +114,7 @@ class ProducerTracker {
                         borderColor: '#ffd700',
                         borderWidth: 1,
                         callbacks: {
-                            title: function(context) {
+                            title: function(context: any) {
                                 const date = new Date(context[0].parsed.x);
                                 const timeString = date.toLocaleTimeString('en-US', { 
                                     hour: 'numeric', 
@@ -100,9 +126,9 @@ class ProducerTracker {
                                 });
                                 return `${dateString}, ${timeString}`;
                             },
-                            label: function(context) {
+                            label: function(context: any) {
                                 const producer = producers.find(p => p.name === context.dataset.label);
-                                return `${producer.name}: ${formatNumber(context.parsed.y)} views`;
+                                return `${producer ? producer.name : 'Unknown'}: ${formatNumber(context.parsed.y)} views`;
                             }
                         }
                     }
@@ -132,8 +158,8 @@ class ProducerTracker {
                         },
                         ticks: {
                             color: '#cccccc',
-                            callback: function(value) {
-                                return formatNumber(value);
+                            callback: function(value: any) {
+                                return formatNumber(typeof value === 'number' ? value : Number(value));
                             }
                         }
                     }
@@ -182,7 +208,7 @@ class ProducerTracker {
                     <div class="producer-profile">
                         ${crownElement}
                         ${stinkLines}
-                        <img src="assets/${imageName}.png" alt="${producer.fullName}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <img src="/assets/${imageName}.png" alt="${producer.fullName}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <span class="fallback-icon">👤</span>
                     </div>
                     <div class="producer-info">
@@ -204,7 +230,7 @@ class ProducerTracker {
         });
     }
 
-    getProducerStats(producerId) {
+    getProducerStats(producerId: string) {
         const dates = getAllDates();
         const latestDate = dates[dates.length - 1];
         
@@ -238,21 +264,22 @@ class ProducerTracker {
         };
     }
 
-    toggleProducerVisibility(producerId) {
+    toggleProducerVisibility(producerId: string) {
         const legendItem = document.querySelector(`[data-producer="${producerId}"]`);
-        const isHidden = legendItem.classList.contains('hidden');
+        const isHidden = legendItem?.classList.contains('hidden');
         
         if (isHidden) {
-            legendItem.classList.remove('hidden');
-            this.producerChart.show(producerId);
+            legendItem?.classList.remove('hidden');
+            this.producerChart?.show(producerId);
         } else {
-            legendItem.classList.add('hidden');
-            this.producerChart.hide(producerId);
+            legendItem?.classList.add('hidden');
+            this.producerChart?.hide(producerId);
         }
     }
 
     renderVideoCharts() {
         const container = document.getElementById('video-charts-grid');
+        if (!container) return;
         container.innerHTML = '';
         
         videoData.forEach(video => {
@@ -268,32 +295,18 @@ class ProducerTracker {
         }, 100);
     }
 
-    createVideoChartContainer(video) {
+    createVideoChartContainer(video: Video) {
         const container = document.createElement('div');
         container.className = 'chart-container';
-        
-        // Create producer bubbles
-        const producerBubbles = video.producers.map(producerId => {
-            const producer = getProducerById(producerId);
-            const imageName = producer.name.toLowerCase();
-            return `<span class="producer-bubble" style="background: ${producer.color};"><span class="producer-icon"><img src="assets/${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="fallback-icon">👤</span></span>${producer.name}</span>`;
-        }).join('');
-
-        container.innerHTML = `
-            <div class="chart-header">
-                <div class="chart-title">${video.title}</div>
-                <div class="total-views-display">${formatNumber(getLatestTotalViews(video))}</div>
-            </div>
-            <canvas id="chart-${video.id}" width="400" height="200"></canvas>
-            <div class="producer-bubbles">
-                ${producerBubbles}
-            </div>
-        `;
+        container.id = `container-${video.id}`;
+        const chartCanvas = document.createElement('canvas');
+        chartCanvas.id = `chart-${video.id}`;
+        container.appendChild(chartCanvas);
         return container;
     }
 
-    renderVideoChart(video) {
-        const ctx = document.getElementById(`chart-${video.id}`);
+    renderVideoChart(video: Video) {
+        const ctx = document.getElementById(`chart-${video.id}`) as HTMLCanvasElement | null;
         if (!ctx) return;
 
         // Create datasets with actual timestamps for linear time scaling
@@ -383,7 +396,7 @@ class ProducerTracker {
                         borderColor: '#ffd700',
                         borderWidth: 1,
                         callbacks: {
-                            title: function(context) {
+                            title: function(context: any) {
                                 const date = new Date(context[0].parsed.x);
                                 const timeString = date.toLocaleTimeString('en-US', { 
                                     hour: 'numeric', 
@@ -395,7 +408,7 @@ class ProducerTracker {
                                 });
                                 return `${dateString}, ${timeString}`;
                             },
-                            label: function(context) {
+                            label: function(context: any) {
                                 return `${context.dataset.label}: ${formatNumber(context.parsed.y)} views`;
                             }
                         }
@@ -426,8 +439,8 @@ class ProducerTracker {
                         },
                         ticks: {
                             color: '#cccccc',
-                            callback: function(value) {
-                                return formatNumber(value);
+                            callback: function(value: any) {
+                                return formatNumber(typeof value === 'number' ? value : Number(value));
                             }
                         }
                     }
@@ -446,13 +459,13 @@ class ProducerTracker {
     updateLastUpdated() {
         const lastUpdated = document.getElementById('last-updated');
         const now = new Date();
-        lastUpdated.textContent = now.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+        if (lastUpdated) {
+            lastUpdated.textContent = now.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+            });
+        }
     }
 }
 
