@@ -203,7 +203,7 @@ class ProducerTracker {
             const crownElement = isWinner ? '<div class="crown">👑</div>' : '';
             const stinkLines = isLoser ? '<div class="stink-lines"><svg class="stink-line left" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg><svg class="stink-line center" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg><svg class="stink-line right" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg></div>' : '';
             
-            const videoText = producer.stats.videoCount === 1 ? 'Video' : 'Videos';
+            const shortsText = producer.stats.videoCount === 1 ? 'Short' : 'Shorts';
             
             producerCard.innerHTML = `
                 <div class="producer-card">
@@ -219,18 +219,15 @@ class ProducerTracker {
                         <div class="producer-breakdown">
                             <span class="youtube-count">YT: ${formatNumber(producer.stats.youtube)}</span>
                             <span class="tiktok-count">TT: ${formatNumber(producer.stats.tiktok)}</span>
+                            ${producer.stats.instagram > 0 ? `<span class="instagram-count">IR: ${formatNumber(producer.stats.instagram)}</span>` : ''}
                         </div>
                         <div class="producer-video-line">
-                            <span class="producer-video-count">${producer.stats.videoCount} ${videoText}</span>
+                            <span class="producer-video-count">${producer.stats.videoCount} ${shortsText}</span>
                             <span class="producer-solo-count">${producer.stats.soloVideoCount} Solo</span>
                         </div>
                     </div>
                 </div>
             `;
-            
-            producerCard.addEventListener('click', () => {
-                this.toggleProducerVisibility(producer.id);
-            });
             
             container.appendChild(producerCard);
         });
@@ -242,6 +239,7 @@ class ProducerTracker {
         
         let youtubeTotal = 0;
         let tiktokTotal = 0;
+        let instagramTotal = 0;
         let videoCount = 0;
         let soloVideoCount = 0;
         
@@ -253,26 +251,31 @@ class ProducerTracker {
                 }
                 const sharePercentage = 1 / video.producers.length;
                 
-                if (this.currentPlatform === 'youtube' || this.currentPlatform === 'all') {
-                    const youtubeView = video.youtubeViews.find(v => v.date === latestDate);
-                    if (youtubeView) {
-                        youtubeTotal += youtubeView.count * sharePercentage;
-                    }
+                // Always calculate all platform totals for display in cards
+                const youtubeView = video.youtubeViews.find(v => v.date === latestDate);
+                if (youtubeView) {
+                    youtubeTotal += youtubeView.count * sharePercentage;
                 }
                 
-                if (this.currentPlatform === 'tiktok' || this.currentPlatform === 'all') {
-                    const tiktokView = video.tiktokViews.find(v => v.date === latestDate);
-                    if (tiktokView) {
-                        tiktokTotal += tiktokView.count * sharePercentage;
+                const tiktokView = video.tiktokViews.find(v => v.date === latestDate);
+                if (tiktokView) {
+                    tiktokTotal += tiktokView.count * sharePercentage;
+                }
+                
+                if (video.instagramViews) {
+                    const instagramView = video.instagramViews.find(v => v.date === latestDate);
+                    if (instagramView) {
+                        instagramTotal += instagramView.count * sharePercentage;
                     }
                 }
             }
         });
         
         return {
-            total: Math.round(youtubeTotal + tiktokTotal),
+            total: Math.round(youtubeTotal + tiktokTotal + instagramTotal),
             youtube: Math.round(youtubeTotal),
             tiktok: Math.round(tiktokTotal),
+            instagram: Math.round(instagramTotal),
             videoCount: videoCount,
             soloVideoCount: soloVideoCount
         };
@@ -328,7 +331,7 @@ class ProducerTracker {
 
         container.innerHTML = `
             <div class="chart-header">
-                <div class="chart-title">${video.title}</div>
+                <div class="chart-title clickable-title" data-video-link="${video.link}">${video.title}</div>
                 <div class="total-views-display">${formatNumber(getLatestTotalViews(video))}</div>
             </div>
             <canvas id="chart-${video.id}" width="400" height="200"></canvas>
@@ -336,6 +339,15 @@ class ProducerTracker {
                 ${producerBubbles}
             </div>
         `;
+        
+        // Add click handler for video title
+        const titleElement = container.querySelector('.clickable-title') as HTMLElement;
+        if (titleElement) {
+            titleElement.addEventListener('click', () => {
+                this.showYouTubePlayer(video.link, video.title);
+            });
+        }
+        
         return container;
     }
 
@@ -488,6 +500,47 @@ class ProducerTracker {
         });
 
         this.videoCharts.set(video.id, chart);
+    }
+
+    showYouTubePlayer(videoLink: string, videoTitle: string) {
+        // Create modal overlay
+        const modal = document.createElement('div');
+        modal.className = 'youtube-modal-overlay';
+        modal.innerHTML = `
+            <div class="youtube-modal">
+                <div class="youtube-modal-header">
+                    <h3>${videoTitle}</h3>
+                    <button class="close-button">&times;</button>
+                </div>
+                <div class="youtube-modal-content">
+                    <iframe 
+                        width="560" 
+                        height="315" 
+                        src="${videoLink.replace('/shorts/', '/embed/')}" 
+                        frameborder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowfullscreen>
+                    </iframe>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(modal);
+        
+        // Close modal when clicking overlay or close button
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal || (e.target as HTMLElement).classList.contains('close-button')) {
+                document.body.removeChild(modal);
+            }
+        });
+        
+        // Close modal with Escape key
+        document.addEventListener('keydown', function closeOnEscape(e) {
+            if (e.key === 'Escape') {
+                document.body.removeChild(modal);
+                document.removeEventListener('keydown', closeOnEscape);
+            }
+        });
     }
 
     updateLastUpdated() {

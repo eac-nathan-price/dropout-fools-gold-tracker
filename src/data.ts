@@ -17,32 +17,34 @@ export interface View {
 export interface Video {
     id: string;
     title: string;
+    link: string;
     producers: string[];
     youtubeViews: View[];
     tiktokViews: View[];
+    instagramViews?: View[];
 }
 
 export const producers: Producer[] = [
     {
-        id: "producer_1",
+        id: "trapp",
         name: "Trapp",
         fullName: "Mike Trapp",
         color: "#10b981" // Emerald
     },
     {
-        id: "producer_2", 
+        id: "rekha", 
         name: "Rekha",
         fullName: "Rekha Shankar",
         color: "#06b6d4" // Cyan
     },
     {
-        id: "producer_3",
+        id: "jordan",
         name: "Jordan", 
         fullName: "Jordan Myrick",
         color: "#6366f1" // Indigo
     },
     {
-        id: "producer_4",
+        id: "sam",
         name: "Sam",
         fullName: "Sam Reich",
         color: "#8b5cf6" // Purple
@@ -53,7 +55,8 @@ export const videoData: Video[] = [
     {
         id: "video_001",
         title: "Peel Robalino",
-        producers: ["producer_1"], // Trapp only
+        link: "https://www.youtube.com/shorts/gMpx4A2lRTE",
+        producers: ["trapp"], // Trapp only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 50000 },
@@ -68,7 +71,8 @@ export const videoData: Video[] = [
     {
         id: "video_002",
         title: "Anna's King for a Day",
-        producers: ["producer_3"], // Jordan only
+        link: "https://www.youtube.com/shorts/UjHk90dxX20",
+        producers: ["jordan"], // Jordan only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 70000 },
@@ -83,7 +87,8 @@ export const videoData: Video[] = [
     {
         id: "video_003",
         title: "Katie's D20 on a Bus",
-        producers: ["producer_2"], // Rekha only
+        link: "https://www.youtube.com/shorts/5feqZBLXrMg",
+        producers: ["rekha"], // Rekha only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 201000 },
@@ -98,7 +103,8 @@ export const videoData: Video[] = [
     {
         id: "video_004",
         title: "Erika's Haircut",
-        producers: ["producer_3"], // Jordan only
+        link: "https://www.youtube.com/shorts/wQVIfuNIc9I",
+        producers: ["jordan"], // Jordan only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 189000 },
@@ -113,7 +119,8 @@ export const videoData: Video[] = [
     {
         id: "video_005",
         title: "Sephie's Sexy Car Wash",
-        producers: ["producer_2", "producer_3"], // Rekha and Jordan (50/50)
+        link: "https://www.youtube.com/shorts/HD5pyGbO_Is",
+        producers: ["rekha", "jordan"], // Rekha and Jordan (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 66000 },
@@ -128,7 +135,8 @@ export const videoData: Video[] = [
     {
         id: "video_006",
         title: "Grant's Crack",
-        producers: ["producer_1"], // Trapp only
+        link: "https://www.youtube.com/shorts/1lnl0jYln8s",
+        producers: ["trapp"], // Trapp only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 53000 },
@@ -142,8 +150,9 @@ export const videoData: Video[] = [
     },
     {
         id: "video_007",
-        title: "Jonny Stanton's Human Puppy Bowl",
-        producers: ["producer_1", "producer_2"], // Trapp and Rekha (50/50)
+        title: "Jonny Stanton's Puppy Bowl",
+        link: "https://www.youtube.com/shorts/aagwlycxv_k",
+        producers: ["trapp", "rekha"], // Trapp and Rekha (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 46000 },
@@ -157,8 +166,9 @@ export const videoData: Video[] = [
     },
     {
         id: "video_008",
-        title: "Lily & Izzy's Breast Milk Taste Test",
-        producers: ["producer_3"], // Jordan only
+        title: "Lily & Izzy's Milk Taste Test",
+        link: "https://www.youtube.com/shorts/nfwmaVlp_hY",
+        producers: ["jordan"], // Jordan only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 66000 },
@@ -173,7 +183,8 @@ export const videoData: Video[] = [
     {
         id: "video_009",
         title: "Izzy's Buttholes",
-        producers: ["producer_1", "producer_2"], // Trapp and Rekha (50/50)
+        link: "https://www.youtube.com/shorts/Wm8SMsmWCts",
+        producers: ["trapp", "rekha"], // Trapp and Rekha (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 186000 },
@@ -188,7 +199,8 @@ export const videoData: Video[] = [
     {
         id: "video_010",
         title: "Vic's Brennan's Exit Video",
-        producers: ["producer_1", "producer_2", "producer_3", "producer_4"], // All producers (25% each)
+        link: "https://www.youtube.com/shorts/oO4kgmYivoQ",
+        producers: ["trapp", "rekha", "jordan", "sam"], // All producers (25% each)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 415000 },
