@@ -2,10 +2,9 @@ import { defineConfig } from 'vite';
 import * as sass from 'sass';
 
 export default defineConfig({
-    root: 'src',
-    publicDir: '../public',
+    publicDir: 'public',
     build: {
-        outDir: '../dist',
+        outDir: 'dist',
         emptyOutDir: true
     },
     css: {
