@@ -265,15 +265,19 @@ class ProducerTracker {
     }
 
     toggleProducerVisibility(producerId: string) {
-        const legendItem = document.querySelector(`[data-producer="${producerId}"]`);
-        const isHidden = legendItem?.classList.contains('hidden');
+        const legendItem = document.querySelector(`[data-producer="${producerId}"]`) as HTMLElement | null;
+        if (!legendItem) return;
+        
+        const isHidden = legendItem.classList.contains('hidden');
         
         if (isHidden) {
-            legendItem?.classList.remove('hidden');
-            this.producerChart?.show(producerId);
+            legendItem.classList.remove('hidden');
+            // Chart.js doesn't have show/hide methods, we need to update the chart data
+            this.renderProducerComparisonChart();
         } else {
-            legendItem?.classList.add('hidden');
-            this.producerChart?.hide(producerId);
+            legendItem.classList.add('hidden');
+            // Chart.js doesn't have show/hide methods, we need to update the chart data
+            this.renderProducerComparisonChart();
         }
     }
 
@@ -299,9 +303,25 @@ class ProducerTracker {
         const container = document.createElement('div');
         container.className = 'chart-container';
         container.id = `container-${video.id}`;
-        const chartCanvas = document.createElement('canvas');
-        chartCanvas.id = `chart-${video.id}`;
-        container.appendChild(chartCanvas);
+        
+        // Create producer bubbles
+        const producerBubbles = video.producers.map(producerId => {
+            const producer = getProducerById(producerId);
+            if (!producer) return '';
+            const imageName = producer.name.toLowerCase();
+            return `<span class="producer-bubble" style="background: ${producer.color};"><span class="producer-icon"><img src="/assets/${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="fallback-icon">👤</span></span>${producer.name}</span>`;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="chart-header">
+                <div class="chart-title">${video.title}</div>
+                <div class="total-views-display">${formatNumber(getLatestTotalViews(video))}</div>
+            </div>
+            <canvas id="chart-${video.id}" width="400" height="200"></canvas>
+            <div class="producer-bubbles">
+                ${producerBubbles}
+            </div>
+        `;
         return container;
     }
 

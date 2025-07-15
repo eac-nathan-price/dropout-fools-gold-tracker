@@ -11,8 +11,8 @@
   },
   "devDependencies": {
     "eslint": "^8.55.0",
-    "sass-embedded": "^1.89.2",
-    "vite": "^5.0.0"
+    "sass": "^1.89.2",
+    "vite": "^7.0.4"
   },
   "keywords": [
     "youtube",

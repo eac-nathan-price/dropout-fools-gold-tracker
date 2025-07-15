@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import * as sass from 'sass';
 
 export default defineConfig({
     root: 'src',
@@ -9,7 +10,9 @@ export default defineConfig({
     },
     css: {
         preprocessorOptions: {
-            scss: {}
+            scss: {
+                implementation: sass
+            }
         }
     },
     server: {
