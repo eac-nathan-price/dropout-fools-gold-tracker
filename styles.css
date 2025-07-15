@@ -54,24 +54,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
-}
-
-.header-icon {
-    flex-shrink: 0;
-}
-
-.header-favicon {
-    width: 90px;
-    height: 90px;
-    border-radius: 50%;
-    background: #1a1a1a;
-    padding: 8px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .header-text {
-    text-align: left;
+    text-align: center;
 }
 
 /* Producer Comparison Section */
@@ -274,9 +260,9 @@ body {
     top: -25px;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 10;
+    z-index: 1;
     display: flex;
-    gap: 8px;
+    gap: 4px;
 }
 
 .stink-line {
@@ -285,18 +271,24 @@ body {
     animation: stinkSquiggle 3s ease-in-out infinite;
 }
 
-.stink-line.center {
+.stink-line.left {
+    animation: stinkSquiggleLeft 3s ease-in-out infinite;
     animation-delay: 0s;
 }
 
-.stink-line.left {
-    animation: stinkSquiggleLeft 3s ease-in-out infinite;
+.stink-line.center {
+    animation: stinkSquiggle 3s ease-in-out infinite;
     animation-delay: 0.5s;
 }
 
 .stink-line.right {
     animation: stinkSquiggleRight 3s ease-in-out infinite;
     animation-delay: 1s;
+}
+
+.sine-path {
+    animation: sineWave 16s ease-in-out infinite;
+    opacity: 0.5;
 }
 
 @keyframes stinkSquiggle {
@@ -353,6 +345,21 @@ body {
     75% { 
         transform: rotate(20deg) translateY(-5px);
         opacity: 1;
+    }
+}
+
+@keyframes sineWave {
+    0%, 100% { 
+        d: path("M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40");
+    }
+    25% { 
+        d: path("M10 0 Q5 8 10 16 Q15 24 10 32 Q5 40 10 40");
+    }
+    50% { 
+        d: path("M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40");
+    }
+    75% { 
+        d: path("M10 0 Q5 8 10 16 Q15 24 10 32 Q5 40 10 40");
     }
 }
 
@@ -520,11 +527,6 @@ body {
     .header-content {
         flex-direction: column;
         gap: 15px;
-    }
-    
-    .header-favicon {
-        width: 75px;
-        height: 75px;
     }
     
     .header-text {

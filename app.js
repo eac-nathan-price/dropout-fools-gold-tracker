@@ -175,7 +175,7 @@ class ProducerTracker {
             producerCard.style.background = producer.color;
             
             const crownElement = isWinner ? '<div class="crown">👑</div>' : '';
-            const stinkLines = isLoser ? '<div class="stink-lines"><svg class="stink-line center" viewBox="0 0 20 40"><path d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg><svg class="stink-line left" viewBox="0 0 20 40"><path d="M10 0 Q5 8 10 16 Q15 24 10 32 Q5 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg><svg class="stink-line right" viewBox="0 0 20 40"><path d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg></div>' : '';
+            const stinkLines = isLoser ? '<div class="stink-lines"><svg class="stink-line left" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg><svg class="stink-line center" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg><svg class="stink-line right" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg></div>' : '';
             
             producerCard.innerHTML = `
                 <div class="producer-card">

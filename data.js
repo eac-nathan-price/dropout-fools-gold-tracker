@@ -110,7 +110,7 @@ const videoData = [
     },
     {
         id: "video_007",
-        title: "Jonny Stanton's Human Puppy Bowl",
+        title: "Jonny Stanton's Puppy Bowl",
         producers: ["producer_1", "producer_2"], // Trapp and Rekha (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
@@ -123,7 +123,7 @@ const videoData = [
     },
     {
         id: "video_008",
-        title: "Lily & Izzy's Breast Milk Taste Test",
+        title: "Lily & Izzy's Milk Taste Test",
         producers: ["producer_3"], // Jordan only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
