@@ -214,6 +214,7 @@ class ProducerTracker {
                     <div class="producer-info">
                         <div class="producer-name">${producer.fullName}</div>
                         <div class="producer-total">${formatNumber(producer.stats.total)} Views</div>
+                        <div class="producer-video-count">${producer.stats.videoCount} Videos</div>
                         <div class="producer-breakdown">
                             <span class="youtube-count">YT: ${formatNumber(producer.stats.youtube)}</span>
                             <span class="tiktok-count">TT: ${formatNumber(producer.stats.tiktok)}</span>
@@ -236,9 +237,11 @@ class ProducerTracker {
         
         let youtubeTotal = 0;
         let tiktokTotal = 0;
+        let videoCount = 0;
         
         videoData.forEach(video => {
             if (video.producers.includes(producerId)) {
+                videoCount++;
                 const sharePercentage = 1 / video.producers.length;
                 
                 if (this.currentPlatform === 'youtube' || this.currentPlatform === 'all') {
@@ -260,7 +263,8 @@ class ProducerTracker {
         return {
             total: Math.round(youtubeTotal + tiktokTotal),
             youtube: Math.round(youtubeTotal),
-            tiktok: Math.round(tiktokTotal)
+            tiktok: Math.round(tiktokTotal),
+            videoCount: videoCount
         };
     }
 

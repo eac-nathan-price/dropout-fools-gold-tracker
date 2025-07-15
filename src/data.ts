@@ -113,7 +113,7 @@ export const videoData: Video[] = [
     {
         id: "video_005",
         title: "Sephie's Sexy Car Wash",
-        producers: ["producer_3", "producer_4"], // Jordan and Sam (50/50)
+        producers: ["producer_2", "producer_3"], // Rekha and Jordan (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 66000 },
