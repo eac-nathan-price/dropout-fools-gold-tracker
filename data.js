@@ -28,176 +28,132 @@ const producers = [
 const videoData = [
     {
         id: "video_001",
-        title: "Amazing Sunset Views",
-        producers: ["producer_1"], // Single producer
+        title: "Peel Robalino",
+        producers: ["producer_1"], // Single producer - Trapp
         youtubeViews: [
-            { date: "2024-01-01", count: 1200 },
-            { date: "2024-01-02", count: 1800 },
-            { date: "2024-01-03", count: 2500 },
-            { date: "2024-01-04", count: 3200 },
-            { date: "2024-01-05", count: 4100 },
-            { date: "2024-01-06", count: 5200 },
-            { date: "2024-01-07", count: 6800 },
-            { date: "2024-01-08", count: 8900 },
-            { date: "2024-01-09", count: 11200 },
-            { date: "2024-01-10", count: 14500 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 50000 }
         ],
         tiktokViews: [
-            { date: "2024-01-01", count: 5000 },
-            { date: "2024-01-02", count: 12000 },
-            { date: "2024-01-03", count: 25000 },
-            { date: "2024-01-04", count: 45000 },
-            { date: "2024-01-05", count: 78000 },
-            { date: "2024-01-06", count: 125000 },
-            { date: "2024-01-07", count: 198000 },
-            { date: "2024-01-08", count: 312000 },
-            { date: "2024-01-09", count: 489000 },
-            { date: "2024-01-10", count: 756000 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 61700 }
         ]
     },
     {
         id: "video_002",
-        title: "Quick Cooking Tips",
-        producers: ["producer_2"], // Single producer
+        title: "Anna's King for a Day",
+        producers: ["producer_2"], // Single producer - Rekha
         youtubeViews: [
-            { date: "2024-01-01", count: 800 },
-            { date: "2024-01-02", count: 1500 },
-            { date: "2024-01-03", count: 2200 },
-            { date: "2024-01-04", count: 3100 },
-            { date: "2024-01-05", count: 4200 },
-            { date: "2024-01-06", count: 5800 },
-            { date: "2024-01-07", count: 7800 },
-            { date: "2024-01-08", count: 10200 },
-            { date: "2024-01-09", count: 13500 },
-            { date: "2024-01-10", count: 17800 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 70000 }
         ],
         tiktokViews: [
-            { date: "2024-01-01", count: 3000 },
-            { date: "2024-01-02", count: 8000 },
-            { date: "2024-01-03", count: 15000 },
-            { date: "2024-01-04", count: 28000 },
-            { date: "2024-01-05", count: 45000 },
-            { date: "2024-01-06", count: 72000 },
-            { date: "2024-01-07", count: 115000 },
-            { date: "2024-01-08", count: 182000 },
-            { date: "2024-01-09", count: 289000 },
-            { date: "2024-01-10", count: 456000 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 127400 }
         ]
     },
     {
         id: "video_003",
-        title: "Tech Review: Latest Gadgets",
-        producers: ["producer_3"], // Single producer
+        title: "Katie's D20 on a Bus",
+        producers: ["producer_3"], // Single producer - Jordan
         youtubeViews: [
-            { date: "2024-01-01", count: 2000 },
-            { date: "2024-01-02", count: 3500 },
-            { date: "2024-01-03", count: 5200 },
-            { date: "2024-01-04", count: 7800 },
-            { date: "2024-01-05", count: 11200 },
-            { date: "2024-01-06", count: 15800 },
-            { date: "2024-01-07", count: 22500 },
-            { date: "2024-01-08", count: 31800 },
-            { date: "2024-01-09", count: 44500 },
-            { date: "2024-01-10", count: 62300 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 201000 }
         ],
         tiktokViews: [
-            { date: "2024-01-01", count: 8000 },
-            { date: "2024-01-02", count: 18000 },
-            { date: "2024-01-03", count: 35000 },
-            { date: "2024-01-04", count: 62000 },
-            { date: "2024-01-05", count: 98000 },
-            { date: "2024-01-06", count: 145000 },
-            { date: "2024-01-07", count: 212000 },
-            { date: "2024-01-08", count: 298000 },
-            { date: "2024-01-09", count: 412000 },
-            { date: "2024-01-10", count: 567000 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 338900 }
         ]
     },
     {
         id: "video_004",
-        title: "Dance Challenge",
-        producers: ["producer_1", "producer_2"], // Shared between 2 producers
+        title: "Erika's Haircut",
+        producers: ["producer_4"], // Single producer - Sam
         youtubeViews: [
-            { date: "2024-01-01", count: 1500 },
-            { date: "2024-01-02", count: 2800 },
-            { date: "2024-01-03", count: 4200 },
-            { date: "2024-01-04", count: 6500 },
-            { date: "2024-01-05", count: 9800 },
-            { date: "2024-01-06", count: 14500 },
-            { date: "2024-01-07", count: 21800 },
-            { date: "2024-01-08", count: 32500 },
-            { date: "2024-01-09", count: 48700 },
-            { date: "2024-01-10", count: 73200 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 189000 }
         ],
         tiktokViews: [
-            { date: "2024-01-01", count: 6000 },
-            { date: "2024-01-02", count: 15000 },
-            { date: "2024-01-03", count: 32000 },
-            { date: "2024-01-04", count: 58000 },
-            { date: "2024-01-05", count: 95000 },
-            { date: "2024-01-06", count: 152000 },
-            { date: "2024-01-07", count: 245000 },
-            { date: "2024-01-08", count: 398000 },
-            { date: "2024-01-09", count: 642000 },
-            { date: "2024-01-10", count: 1035000 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 103700 }
         ]
     },
     {
         id: "video_005",
-        title: "Life Hacks Compilation",
-        producers: ["producer_3", "producer_4"], // Shared between 2 producers
+        title: "Sephie's Sexy Car Wash",
+        producers: ["producer_1"], // Single producer - Trapp
         youtubeViews: [
-            { date: "2024-01-01", count: 1200 },
-            { date: "2024-01-02", count: 2200 },
-            { date: "2024-01-03", count: 3800 },
-            { date: "2024-01-04", count: 6200 },
-            { date: "2024-01-05", count: 9800 },
-            { date: "2024-01-06", count: 15200 },
-            { date: "2024-01-07", count: 23800 },
-            { date: "2024-01-08", count: 37200 },
-            { date: "2024-01-09", count: 58100 },
-            { date: "2024-01-10", count: 90800 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 66000 }
         ],
         tiktokViews: [
-            { date: "2024-01-01", count: 4000 },
-            { date: "2024-01-02", count: 10000 },
-            { date: "2024-01-03", count: 22000 },
-            { date: "2024-01-04", count: 42000 },
-            { date: "2024-01-05", count: 72000 },
-            { date: "2024-01-06", count: 118000 },
-            { date: "2024-01-07", count: 195000 },
-            { date: "2024-01-08", count: 322000 },
-            { date: "2024-01-09", count: 532000 },
-            { date: "2024-01-10", count: 878000 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 73700 }
         ]
     },
     {
         id: "video_006",
-        title: "Pet Funny Moments",
-        producers: ["producer_4"], // Single producer
+        title: "Grant's Crack",
+        producers: ["producer_2"], // Single producer - Rekha
         youtubeViews: [
-            { date: "2024-01-01", count: 900 },
-            { date: "2024-01-02", count: 1600 },
-            { date: "2024-01-03", count: 2800 },
-            { date: "2024-01-04", count: 4500 },
-            { date: "2024-01-05", count: 7200 },
-            { date: "2024-01-06", count: 11500 },
-            { date: "2024-01-07", count: 18400 },
-            { date: "2024-01-08", count: 29400 },
-            { date: "2024-01-09", count: 47000 },
-            { date: "2024-01-10", count: 75200 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 53000 }
         ],
         tiktokViews: [
-            { date: "2024-01-01", count: 3500 },
-            { date: "2024-01-02", count: 8500 },
-            { date: "2024-01-03", count: 18000 },
-            { date: "2024-01-04", count: 35000 },
-            { date: "2024-01-05", count: 62000 },
-            { date: "2024-01-06", count: 98000 },
-            { date: "2024-01-07", count: 152000 },
-            { date: "2024-01-08", count: 238000 },
-            { date: "2024-01-09", count: 372000 },
-            { date: "2024-01-10", count: 581000 }
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 64100 }
+        ]
+    },
+    {
+        id: "video_007",
+        title: "Jonny Stanton's Human Puppy Bowl",
+        producers: ["producer_3"], // Single producer - Jordan
+        youtubeViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 46000 }
+        ],
+        tiktokViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 89600 }
+        ]
+    },
+    {
+        id: "video_008",
+        title: "Lily & Izzy's Breast Milk Taste Test",
+        producers: ["producer_4"], // Single producer - Sam
+        youtubeViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 66000 }
+        ],
+        tiktokViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 292000 }
+        ]
+    },
+    {
+        id: "video_009",
+        title: "Izzy's Buttholes",
+        producers: ["producer_1"], // Single producer - Trapp
+        youtubeViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 186000 }
+        ],
+        tiktokViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 90300 }
+        ]
+    },
+    {
+        id: "video_010",
+        title: "Vic's Brennan's Exit Video",
+        producers: ["producer_2"], // Single producer - Rekha
+        youtubeViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 415000 }
+        ],
+        tiktokViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 881200 }
         ]
     }
 ];
