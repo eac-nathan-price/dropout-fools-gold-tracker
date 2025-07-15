@@ -29,7 +29,7 @@ const videoData = [
     {
         id: "video_001",
         title: "Peel Robalino",
-        producers: ["producer_1"], // Single producer - Trapp
+        producers: ["producer_1"], // Trapp only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 50000 }
@@ -42,7 +42,7 @@ const videoData = [
     {
         id: "video_002",
         title: "Anna's King for a Day",
-        producers: ["producer_2"], // Single producer - Rekha
+        producers: ["producer_3"], // Jordan only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 70000 }
@@ -55,7 +55,7 @@ const videoData = [
     {
         id: "video_003",
         title: "Katie's D20 on a Bus",
-        producers: ["producer_3"], // Single producer - Jordan
+        producers: ["producer_2"], // Rekha only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 201000 }
@@ -68,7 +68,7 @@ const videoData = [
     {
         id: "video_004",
         title: "Erika's Haircut",
-        producers: ["producer_4"], // Single producer - Sam
+        producers: ["producer_3"], // Jordan only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 189000 }
@@ -81,7 +81,7 @@ const videoData = [
     {
         id: "video_005",
         title: "Sephie's Sexy Car Wash",
-        producers: ["producer_1"], // Single producer - Trapp
+        producers: ["producer_3", "producer_4"], // Jordan and Sam (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 66000 }
@@ -94,7 +94,7 @@ const videoData = [
     {
         id: "video_006",
         title: "Grant's Crack",
-        producers: ["producer_2"], // Single producer - Rekha
+        producers: ["producer_1"], // Trapp only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 53000 }
@@ -107,7 +107,7 @@ const videoData = [
     {
         id: "video_007",
         title: "Jonny Stanton's Human Puppy Bowl",
-        producers: ["producer_3"], // Single producer - Jordan
+        producers: ["producer_1", "producer_2"], // Trapp and Rekha (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 46000 }
@@ -120,7 +120,7 @@ const videoData = [
     {
         id: "video_008",
         title: "Lily & Izzy's Breast Milk Taste Test",
-        producers: ["producer_4"], // Single producer - Sam
+        producers: ["producer_3"], // Jordan only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 66000 }
@@ -133,7 +133,7 @@ const videoData = [
     {
         id: "video_009",
         title: "Izzy's Buttholes",
-        producers: ["producer_1"], // Single producer - Trapp
+        producers: ["producer_1", "producer_2"], // Trapp and Rekha (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 186000 }
@@ -146,7 +146,7 @@ const videoData = [
     {
         id: "video_010",
         title: "Vic's Brennan's Exit Video",
-        producers: ["producer_2"], // Single producer - Rekha
+        producers: ["producer_1", "producer_2", "producer_3", "producer_4"], // All producers (25% each)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 415000 }
