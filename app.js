@@ -153,27 +153,44 @@ class ProducerTracker {
 
         container.innerHTML = '';
         
-        producers.forEach(producer => {
-            const stats = this.getProducerStats(producer.id);
+        // Get producer stats and determine winner/loser
+        const producerStats = producers.map(producer => ({
+            ...producer,
+            stats: this.getProducerStats(producer.id)
+        }));
+        
+        // Sort by total views to determine winner and loser
+        producerStats.sort((a, b) => b.stats.total - a.stats.total);
+        const winner = producerStats[0];
+        const loser = producerStats[producerStats.length - 1];
+        
+        producerStats.forEach(producer => {
             const imageName = producer.name.toLowerCase();
+            const isWinner = producer.id === winner.id;
+            const isLoser = producer.id === loser.id;
             
             const producerCard = document.createElement('div');
             producerCard.className = 'legend-item';
             producerCard.dataset.producer = producer.id;
             producerCard.style.background = producer.color;
             
+            const crownElement = isWinner ? '<div class="crown">👑</div>' : '';
+            const stinkLines = isLoser ? '<div class="stink-lines">💨</div>' : '';
+            
             producerCard.innerHTML = `
                 <div class="producer-card">
                     <div class="producer-profile">
-                        <img src="${imageName}.png" alt="${producer.fullName}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        ${crownElement}
+                        ${stinkLines}
+                        <img src="assets/${imageName}.png" alt="${producer.fullName}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <span class="fallback-icon">👤</span>
                     </div>
                     <div class="producer-info">
                         <div class="producer-name">${producer.fullName}</div>
-                        <div class="producer-total">${formatNumber(stats.total)} Views</div>
+                        <div class="producer-total">${formatNumber(producer.stats.total)} Views</div>
                         <div class="producer-breakdown">
-                            <span class="youtube-count">YT: ${formatNumber(stats.youtube)}</span>
-                            <span class="tiktok-count">TT: ${formatNumber(stats.tiktok)}</span>
+                            <span class="youtube-count">YT: ${formatNumber(producer.stats.youtube)}</span>
+                            <span class="tiktok-count">TT: ${formatNumber(producer.stats.tiktok)}</span>
                         </div>
                     </div>
                 </div>
@@ -259,7 +276,7 @@ class ProducerTracker {
         const producerBubbles = video.producers.map(producerId => {
             const producer = getProducerById(producerId);
             const imageName = producer.name.toLowerCase();
-            return `<span class="producer-bubble" style="background: ${producer.color};"><span class="producer-icon"><img src="${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="fallback-icon">👤</span></span>${producer.name}</span>`;
+            return `<span class="producer-bubble" style="background: ${producer.color};"><span class="producer-icon"><img src="assets/${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="fallback-icon">👤</span></span>${producer.name}</span>`;
         }).join('');
 
         container.innerHTML = `
