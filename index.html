@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shorts Tracker - View Analytics</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1>📊 Shorts Tracker</h1>
+            <p>YouTube & TikTok View Analytics</p>
+        </header>
+
+        <nav class="nav-tabs">
+            <button class="tab-btn active" data-tab="individual">Individual Videos</button>
+            <button class="tab-btn" data-tab="groups">Group Analytics</button>
+        </nav>
+
+        <main class="main-content">
+            <!-- Individual Videos Tab -->
+            <div id="individual" class="tab-content active">
+                <div class="controls">
+                    <div class="filter-group">
+                        <label for="platform-filter">Platform:</label>
+                        <select id="platform-filter">
+                            <option value="all">All Platforms</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="tiktok">TikTok</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="tag-filter">Tag:</label>
+                        <select id="tag-filter">
+                            <option value="all">All Tags</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="individual-charts" class="charts-grid">
+                    <!-- Individual video charts will be rendered here -->
+                </div>
+            </div>
+
+            <!-- Group Analytics Tab -->
+            <div id="groups" class="tab-content">
+                <div class="controls">
+                    <div class="filter-group">
+                        <label for="group-platform-filter">Platform:</label>
+                        <select id="group-platform-filter">
+                            <option value="all">All Platforms</option>
+                            <option value="youtube">YouTube</option>
+                            <option value="tiktok">TikTok</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div id="group-charts" class="charts-grid">
+                    <!-- Group charts will be rendered here -->
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Last updated: <span id="last-updated">Loading...</span></p>
+        </footer>
+    </div>
+
+    <script src="data.js"></script>
+    <script src="app.js"></script>
+</body>
+</html> 
