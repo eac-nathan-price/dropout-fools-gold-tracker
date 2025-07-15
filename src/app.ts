@@ -366,59 +366,85 @@ class ProducerTracker {
             y: view.count
         }));
 
+        const instagramData = video.instagramViews ? video.instagramViews.map(view => ({
+            x: new Date(view.date),
+            y: view.count
+        })) : [];
+
         // Calculate total views for each date
         const totalData = youtubeData.map((youtube, index) => ({
             x: youtube.x,
-            y: youtube.y + tiktokData[index].y
+            y: youtube.y + tiktokData[index].y + (instagramData[index] ? instagramData[index].y : 0)
         }));
+
+        const datasets = [
+            {
+                label: 'YouTube',
+                data: youtubeData,
+                borderColor: '#ff0000',
+                backgroundColor: 'rgba(255, 0, 0, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#ff0000',
+                pointBorderColor: '#1a1a1a',
+                pointBorderWidth: 1,
+                pointRadius: 3,
+                pointHoverRadius: 5
+            },
+            {
+                label: 'TikTok',
+                data: tiktokData,
+                borderColor: '#ffffff',
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#ffffff',
+                pointBorderColor: '#1a1a1a',
+                pointBorderWidth: 1,
+                pointRadius: 3,
+                pointHoverRadius: 5
+            }
+        ];
+
+        // Add Instagram dataset if data exists
+        if (instagramData.length > 0) {
+            datasets.push({
+                label: 'Instagram',
+                data: instagramData,
+                borderColor: '#ff69b4',
+                backgroundColor: 'rgba(255, 105, 180, 0.2)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4,
+                pointBackgroundColor: '#ff69b4',
+                pointBorderColor: '#1a1a1a',
+                pointBorderWidth: 1,
+                pointRadius: 3,
+                pointHoverRadius: 5
+            });
+        }
+
+        datasets.push({
+            label: 'Total',
+            data: totalData,
+            borderColor: '#ffd700',
+            backgroundColor: 'rgba(255, 215, 0, 0.1)',
+            borderWidth: 3,
+            fill: false,
+            tension: 0.4,
+            pointBackgroundColor: '#ffd700',
+            pointBorderColor: '#1a1a1a',
+            pointBorderWidth: 2,
+            pointRadius: 4,
+            pointHoverRadius: 6
+        });
 
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
-                datasets: [
-                    {
-                        label: 'YouTube',
-                        data: youtubeData,
-                        borderColor: '#ff0000',
-                        backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#ff0000',
-                        pointBorderColor: '#1a1a1a',
-                        pointBorderWidth: 1,
-                        pointRadius: 3,
-                        pointHoverRadius: 5
-                    },
-                    {
-                        label: 'TikTok',
-                        data: tiktokData,
-                        borderColor: '#ffffff',
-                        backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.4,
-                        pointBackgroundColor: '#ffffff',
-                        pointBorderColor: '#1a1a1a',
-                        pointBorderWidth: 1,
-                        pointRadius: 3,
-                        pointHoverRadius: 5
-                    },
-                    {
-                        label: 'Total',
-                        data: totalData,
-                        borderColor: '#ffd700',
-                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                        borderWidth: 3,
-                        fill: false,
-                        tension: 0.4,
-                        pointBackgroundColor: '#ffd700',
-                        pointBorderColor: '#1a1a1a',
-                        pointBorderWidth: 2,
-                        pointRadius: 4,
-                        pointHoverRadius: 6
-                    }
-                ]
+                datasets: datasets
             },
             options: {
                 responsive: true,

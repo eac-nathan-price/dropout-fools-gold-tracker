@@ -66,6 +66,11 @@ export const videoData: Video[] = [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 61700 },
             { date: "2025-07-15T08:00:00-07:00", count: 78000 }
+        ],
+        instagramViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 0 },
+            { date: "2025-07-15T14:00:00-07:00", count: 494000 }
         ]
     },
     {
@@ -82,6 +87,11 @@ export const videoData: Video[] = [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 127400 },
             { date: "2025-07-15T08:00:00-07:00", count: 118000 }
+        ],
+        instagramViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 0 },
+            { date: "2025-07-15T14:00:00-07:00", count: 381000 }
         ]
     },
     {
@@ -98,6 +108,11 @@ export const videoData: Video[] = [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 338900 },
             { date: "2025-07-15T08:00:00-07:00", count: 403000 }
+        ],
+        instagramViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 0 },
+            { date: "2025-07-15T14:00:00-07:00", count: 763000 }
         ]
     },
     {
@@ -114,6 +129,11 @@ export const videoData: Video[] = [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 103700 },
             { date: "2025-07-15T08:00:00-07:00", count: 103700 }
+        ],
+        instagramViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 0 },
+            { date: "2025-07-15T14:00:00-07:00", count: 377000 }
         ]
     },
     {
@@ -130,6 +150,11 @@ export const videoData: Video[] = [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 73700 },
             { date: "2025-07-15T08:00:00-07:00", count: 102000 }
+        ],
+        instagramViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 0 },
+            { date: "2025-07-15T14:00:00-07:00", count: 538000 }
         ]
     },
     {
@@ -146,6 +171,11 @@ export const videoData: Video[] = [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 64100 },
             { date: "2025-07-15T08:00:00-07:00", count: 79000 }
+        ],
+        instagramViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 0 },
+            { date: "2025-07-15T14:00:00-07:00", count: 287000 }
         ]
     },
     {
@@ -162,6 +192,11 @@ export const videoData: Video[] = [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 89600 },
             { date: "2025-07-15T08:00:00-07:00", count: 71000 }
+        ],
+        instagramViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 0 },
+            { date: "2025-07-15T14:00:00-07:00", count: 226000 }
         ]
     },
     {
@@ -178,6 +213,11 @@ export const videoData: Video[] = [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 292000 },
             { date: "2025-07-15T08:00:00-07:00", count: 107000 }
+        ],
+        instagramViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 0 },
+            { date: "2025-07-15T14:00:00-07:00", count: 1400000 }
         ]
     },
     {
@@ -194,6 +234,11 @@ export const videoData: Video[] = [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 90300 },
             { date: "2025-07-15T08:00:00-07:00", count: 372000 }
+        ],
+        instagramViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 0 },
+            { date: "2025-07-15T14:00:00-07:00", count: 378000 }
         ]
     },
     {
@@ -210,6 +255,11 @@ export const videoData: Video[] = [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
             { date: "2025-07-15T00:00:00-07:00", count: 881200 },
             { date: "2025-07-15T08:00:00-07:00", count: 825000 }
+        ],
+        instagramViews: [
+            { date: "2025-07-14T16:00:00-07:00", count: 0 },
+            { date: "2025-07-15T00:00:00-07:00", count: 0 },
+            { date: "2025-07-15T14:00:00-07:00", count: 1800000 }
         ]
     }
 ];
@@ -220,6 +270,9 @@ export function getAllDates(): string[] {
     videoData.forEach(video => {
         video.youtubeViews.forEach(view => allDates.add(view.date));
         video.tiktokViews.forEach(view => allDates.add(view.date));
+        if (video.instagramViews) {
+            video.instagramViews.forEach(view => allDates.add(view.date));
+        }
     });
     return Array.from(allDates).sort();
 }
@@ -230,7 +283,7 @@ export function getProducerById(id: string): Producer | undefined {
 }
 
 // Helper function to calculate producer views for a specific date and platform
-export function getProducerViewsForDate(producerId: string, date: string, platform: 'youtube' | 'tiktok' | 'all' = 'all'): number {
+export function getProducerViewsForDate(producerId: string, date: string, platform: 'youtube' | 'tiktok' | 'instagram' | 'all' = 'all'): number {
     let totalViews = 0;
     
     videoData.forEach(video => {
@@ -248,6 +301,13 @@ export function getProducerViewsForDate(producerId: string, date: string, platfo
                 const tiktokView = video.tiktokViews.find(v => v.date === date);
                 if (tiktokView) {
                     totalViews += tiktokView.count * sharePercentage;
+                }
+            }
+            
+            if ((platform === 'instagram' || platform === 'all') && video.instagramViews) {
+                const instagramView = video.instagramViews.find(v => v.date === date);
+                if (instagramView) {
+                    totalViews += instagramView.count * sharePercentage;
                 }
             }
         }
@@ -272,12 +332,14 @@ export function formatNumber(num: number): string {
 export function getLatestTotalViews(video: Video): number {
     const latestYoutube = video.youtubeViews[video.youtubeViews.length - 1]?.count || 0;
     const latestTiktok = video.tiktokViews[video.tiktokViews.length - 1]?.count || 0;
-    return latestYoutube + latestTiktok;
+    const latestInstagram = video.instagramViews ? video.instagramViews[video.instagramViews.length - 1]?.count || 0 : 0;
+    return latestYoutube + latestTiktok + latestInstagram;
 }
 
 // Helper function to get total views for a video
 export function getTotalViews(video: Video): number {
     const youtubeTotal = video.youtubeViews.reduce((sum, view) => sum + view.count, 0);
     const tiktokTotal = video.tiktokViews.reduce((sum, view) => sum + view.count, 0);
-    return youtubeTotal + tiktokTotal;
+    const instagramTotal = video.instagramViews ? video.instagramViews.reduce((sum, view) => sum + view.count, 0) : 0;
+    return youtubeTotal + tiktokTotal + instagramTotal;
 } 
