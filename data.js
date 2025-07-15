@@ -5,23 +5,23 @@
 const producers = [
     {
         id: "producer_1",
-        name: "Producer Alpha",
-        color: "#ff6b6b" // Red
+        name: "Trapp",
+        color: "#6366f1" // Indigo
     },
     {
         id: "producer_2", 
-        name: "Producer Beta",
-        color: "#4ecdc4" // Teal
+        name: "Rekha",
+        color: "#06b6d4" // Cyan
     },
     {
         id: "producer_3",
-        name: "Producer Gamma", 
-        color: "#45b7d1" // Blue
+        name: "Jordan", 
+        color: "#8b5cf6" // Purple
     },
     {
         id: "producer_4",
-        name: "Producer Delta",
-        color: "#96ceb4" // Green
+        name: "Sam",
+        color: "#10b981" // Emerald
     }
 ];
 

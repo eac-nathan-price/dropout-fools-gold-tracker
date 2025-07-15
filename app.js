@@ -165,7 +165,8 @@ class ProducerTracker {
         // Create producer bubbles
         const producerBubbles = video.producers.map(producerId => {
             const producer = getProducerById(producerId);
-            return `<span class="producer-bubble" style="background: ${producer.color};"><span class="producer-icon">👤</span>${producer.name}</span>`;
+            const imageName = producer.name.toLowerCase();
+            return `<span class="producer-bubble" style="background: ${producer.color};"><span class="producer-icon"><img src="${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="fallback-icon">👤</span></span>${producer.name}</span>`;
         }).join('');
 
         container.innerHTML = `
