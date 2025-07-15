@@ -321,12 +321,16 @@ class ProducerTracker {
         container.className = 'chart-container';
         container.id = `container-${video.id}`;
         
+        // Calculate total views and producer share
+        const totalViews = getLatestTotalViews(video);
+        const producerShare = totalViews / video.producers.length;
+        
         // Create producer bubbles
         const producerBubbles = video.producers.map(producerId => {
             const producer = getProducerById(producerId);
             if (!producer) return '';
             const imageName = producer.name.toLowerCase();
-            return `<span class="producer-bubble" style="background: ${producer.color};"><span class="producer-icon"><img src="/assets/${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="fallback-icon">👤</span></span>${producer.name}</span>`;
+            return `<span class="producer-bubble" style="background: ${producer.color};" title="${producer.fullName}: ${formatNumber(producerShare)} views"><span class="producer-icon"><img src="/assets/${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="fallback-icon">👤</span></span>${producer.name}</span>`;
         }).join('');
 
         container.innerHTML = `
@@ -577,12 +581,19 @@ class ProducerTracker {
 
     updateLastUpdated() {
         const lastUpdated = document.getElementById('last-updated');
-        const now = new Date();
-        if (lastUpdated) {
-            lastUpdated.textContent = now.toLocaleDateString('en-US', {
+        const dates = getAllDates();
+        const latestDate = dates[dates.length - 1];
+        
+        if (lastUpdated && latestDate) {
+            const date = new Date(latestDate);
+            lastUpdated.textContent = date.toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric',
+            }) + ' at ' + date.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
             });
         }
     }
