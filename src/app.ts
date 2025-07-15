@@ -74,7 +74,7 @@ class ProducerTracker {
         const datasets = producers.map(producer => {
             const data = dates.map(date => ({
                 x: new Date(date),
-                y: getProducerViewsForDate(producer.id, date, this.currentPlatform as 'all' | 'youtube' | 'tiktok')
+                y: getProducerViewsForDate(producer.id, date, this.currentPlatform as 'all' | 'youtube' | 'tiktok' | 'instagram')
             }));
             
             return {
