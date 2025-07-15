@@ -13,6 +13,7 @@ class ProducerTracker {
         this.updateLastUpdated();
         this.renderProducerComparisonChart();
         this.renderVideoCharts();
+        this.renderProducerStats();
     }
 
     setupEventListeners() {
@@ -20,6 +21,7 @@ class ProducerTracker {
         document.getElementById('platform-filter').addEventListener('change', (e) => {
             this.currentPlatform = e.target.value;
             this.renderProducerComparisonChart();
+            this.renderProducerStats();
         });
 
         // Producer legend click handlers
@@ -41,14 +43,13 @@ class ProducerTracker {
         }
 
         const dates = getAllDates();
-        const labels = dates.map(date => {
-            const d = new Date(date);
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        });
-
-        // Create datasets for each producer
+        
+        // Create datasets for each producer with actual timestamps
         const datasets = producers.map(producer => {
-            const data = dates.map(date => getProducerViewsForDate(producer.id, date, this.currentPlatform));
+            const data = dates.map(date => ({
+                x: new Date(date),
+                y: getProducerViewsForDate(producer.id, date, this.currentPlatform)
+            }));
             
             return {
                 label: producer.name,
@@ -69,7 +70,6 @@ class ProducerTracker {
         this.producerChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
                 datasets: datasets
             },
             options: {
@@ -88,6 +88,19 @@ class ProducerTracker {
                         borderColor: '#ffd700',
                         borderWidth: 1,
                         callbacks: {
+                            title: function(context) {
+                                const date = context[0].parsed.x;
+                                const timeString = date.toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    minute: '2-digit',
+                                    hour12: true 
+                                });
+                                const dateString = date.toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric' 
+                                });
+                                return `${dateString} at ${timeString}`;
+                            },
                             label: function(context) {
                                 const producer = producers.find(p => p.name === context.dataset.label);
                                 return `${producer.name}: ${formatNumber(context.parsed.y)} views`;
@@ -97,6 +110,13 @@ class ProducerTracker {
                 },
                 scales: {
                     x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            displayFormats: {
+                                day: 'MMM d'
+                            }
+                        },
                         grid: {
                             color: '#333333'
                         },
@@ -126,6 +146,80 @@ class ProducerTracker {
                 }
             }
         });
+    }
+
+    renderProducerStats() {
+        const container = document.querySelector('.producer-legend');
+        if (!container) return;
+
+        container.innerHTML = '';
+        
+        producers.forEach(producer => {
+            const stats = this.getProducerStats(producer.id);
+            const imageName = producer.name.toLowerCase();
+            
+            const producerCard = document.createElement('div');
+            producerCard.className = 'legend-item';
+            producerCard.dataset.producer = producer.id;
+            producerCard.style.background = producer.color;
+            
+            producerCard.innerHTML = `
+                <div class="producer-card">
+                    <div class="producer-profile">
+                        <img src="${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <span class="fallback-icon">👤</span>
+                    </div>
+                    <div class="producer-info">
+                        <div class="producer-name">${producer.name}</div>
+                        <div class="producer-total">${formatNumber(stats.total)}</div>
+                        <div class="producer-breakdown">
+                            <span class="youtube-count">YT: ${formatNumber(stats.youtube)}</span>
+                            <span class="tiktok-count">TT: ${formatNumber(stats.tiktok)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            producerCard.addEventListener('click', () => {
+                this.toggleProducerVisibility(producer.id);
+            });
+            
+            container.appendChild(producerCard);
+        });
+    }
+
+    getProducerStats(producerId) {
+        const dates = getAllDates();
+        const latestDate = dates[dates.length - 1];
+        
+        let youtubeTotal = 0;
+        let tiktokTotal = 0;
+        
+        videoData.forEach(video => {
+            if (video.producers.includes(producerId)) {
+                const sharePercentage = 1 / video.producers.length;
+                
+                if (this.currentPlatform === 'youtube' || this.currentPlatform === 'all') {
+                    const youtubeView = video.youtubeViews.find(v => v.date === latestDate);
+                    if (youtubeView) {
+                        youtubeTotal += youtubeView.count * sharePercentage;
+                    }
+                }
+                
+                if (this.currentPlatform === 'tiktok' || this.currentPlatform === 'all') {
+                    const tiktokView = video.tiktokViews.find(v => v.date === latestDate);
+                    if (tiktokView) {
+                        tiktokTotal += tiktokView.count * sharePercentage;
+                    }
+                }
+            }
+        });
+        
+        return {
+            total: Math.round(youtubeTotal + tiktokTotal),
+            youtube: Math.round(youtubeTotal),
+            tiktok: Math.round(tiktokTotal)
+        };
     }
 
     toggleProducerVisibility(producerId) {

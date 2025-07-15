@@ -7,6 +7,7 @@
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 </head>
 <body>
     <div class="container">
@@ -33,34 +34,7 @@
                     <canvas id="producer-comparison-chart"></canvas>
                 </div>
                 <div class="producer-legend">
-                    <div class="legend-item" data-producer="producer_1" style="background: #10b981;">
-                        <span class="legend-color">
-                            <img src="trapp.png" alt="Trapp" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <span class="fallback-icon">👤</span>
-                        </span>
-                        <span class="legend-name">Trapp</span>
-                    </div>
-                    <div class="legend-item" data-producer="producer_2" style="background: #06b6d4;">
-                        <span class="legend-color">
-                            <img src="rekha.png" alt="Rekha" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <span class="fallback-icon">👤</span>
-                        </span>
-                        <span class="legend-name">Rekha</span>
-                    </div>
-                    <div class="legend-item" data-producer="producer_3" style="background: #6366f1;">
-                        <span class="legend-color">
-                            <img src="jordan.png" alt="Jordan" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <span class="fallback-icon">👤</span>
-                        </span>
-                        <span class="legend-name">Jordan</span>
-                    </div>
-                    <div class="legend-item" data-producer="producer_4" style="background: #8b5cf6;">
-                        <span class="legend-color">
-                            <img src="sam.png" alt="Sam" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                            <span class="fallback-icon">👤</span>
-                        </span>
-                        <span class="legend-name">Sam</span>
-                    </div>
+                    <!-- Producer cards will be generated dynamically -->
                 </div>
             </div>
         </section>
