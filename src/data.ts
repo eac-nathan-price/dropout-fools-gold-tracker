@@ -56,11 +56,13 @@ export const videoData: Video[] = [
         producers: ["producer_1"], // Trapp only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 50000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 50000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 84300 }
         ],
         tiktokViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 61700 }
+            { date: "2025-07-15T00:00:00-07:00", count: 61700 },
+            { date: "2025-07-15T08:00:00-07:00", count: 78000 }
         ]
     },
     {
@@ -69,11 +71,13 @@ export const videoData: Video[] = [
         producers: ["producer_3"], // Jordan only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 70000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 70000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 255500 }
         ],
         tiktokViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 127400 }
+            { date: "2025-07-15T00:00:00-07:00", count: 127400 },
+            { date: "2025-07-15T08:00:00-07:00", count: 118000 }
         ]
     },
     {
@@ -82,11 +86,13 @@ export const videoData: Video[] = [
         producers: ["producer_2"], // Rekha only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 201000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 201000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 545200 }
         ],
         tiktokViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 338900 }
+            { date: "2025-07-15T00:00:00-07:00", count: 338900 },
+            { date: "2025-07-15T08:00:00-07:00", count: 403000 }
         ]
     },
     {
@@ -95,11 +101,13 @@ export const videoData: Video[] = [
         producers: ["producer_3"], // Jordan only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 189000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 189000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 145800 }
         ],
         tiktokViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 103700 }
+            { date: "2025-07-15T00:00:00-07:00", count: 103700 },
+            { date: "2025-07-15T08:00:00-07:00", count: 103700 }
         ]
     },
     {
@@ -108,11 +116,13 @@ export const videoData: Video[] = [
         producers: ["producer_3", "producer_4"], // Jordan and Sam (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 66000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 66000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 97600 }
         ],
         tiktokViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 73700 }
+            { date: "2025-07-15T00:00:00-07:00", count: 73700 },
+            { date: "2025-07-15T08:00:00-07:00", count: 102000 }
         ]
     },
     {
@@ -121,37 +131,43 @@ export const videoData: Video[] = [
         producers: ["producer_1"], // Trapp only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 53000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 53000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 97900 }
         ],
         tiktokViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 64100 }
+            { date: "2025-07-15T00:00:00-07:00", count: 64100 },
+            { date: "2025-07-15T08:00:00-07:00", count: 79000 }
         ]
     },
     {
         id: "video_007",
-        title: "Jonny Stanton's Puppy Bowl",
+        title: "Jonny Stanton's Human Puppy Bowl",
         producers: ["producer_1", "producer_2"], // Trapp and Rekha (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 46000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 46000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 130700 }
         ],
         tiktokViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 89600 }
+            { date: "2025-07-15T00:00:00-07:00", count: 89600 },
+            { date: "2025-07-15T08:00:00-07:00", count: 71000 }
         ]
     },
     {
         id: "video_008",
-        title: "Lily & Izzy's Milk Taste Test",
+        title: "Lily & Izzy's Breast Milk Taste Test",
         producers: ["producer_3"], // Jordan only
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 66000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 66000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 422800 }
         ],
         tiktokViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 292000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 292000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 107000 }
         ]
     },
     {
@@ -160,11 +176,13 @@ export const videoData: Video[] = [
         producers: ["producer_1", "producer_2"], // Trapp and Rekha (50/50)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 186000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 186000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 125200 }
         ],
         tiktokViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 90300 }
+            { date: "2025-07-15T00:00:00-07:00", count: 90300 },
+            { date: "2025-07-15T08:00:00-07:00", count: 372000 }
         ]
     },
     {
@@ -173,11 +191,13 @@ export const videoData: Video[] = [
         producers: ["producer_1", "producer_2", "producer_3", "producer_4"], // All producers (25% each)
         youtubeViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 415000 }
+            { date: "2025-07-15T00:00:00-07:00", count: 415000 },
+            { date: "2025-07-15T08:00:00-07:00", count: 1500000 }
         ],
         tiktokViews: [
             { date: "2025-07-14T16:00:00-07:00", count: 0 },
-            { date: "2025-07-15T00:00:00-07:00", count: 881200 }
+            { date: "2025-07-15T00:00:00-07:00", count: 881200 },
+            { date: "2025-07-15T08:00:00-07:00", count: 825000 }
         ]
     }
 ];
