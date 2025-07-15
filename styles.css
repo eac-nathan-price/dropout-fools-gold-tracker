@@ -140,6 +140,7 @@ body {
     gap: 16px;
     margin-top: 24px;
     flex-wrap: wrap;
+    justify-content: center;
 }
 
 .legend-item {

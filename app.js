@@ -89,17 +89,16 @@ class ProducerTracker {
                         borderWidth: 1,
                         callbacks: {
                             title: function(context) {
-                                const date = context[0].parsed.x;
+                                const date = new Date(context[0].parsed.x);
                                 const timeString = date.toLocaleTimeString('en-US', { 
                                     hour: 'numeric', 
-                                    minute: '2-digit',
                                     hour12: true 
                                 });
                                 const dateString = date.toLocaleDateString('en-US', { 
-                                    month: 'short', 
+                                    month: 'long', 
                                     day: 'numeric' 
                                 });
-                                return `${dateString} at ${timeString}`;
+                                return `${dateString}, ${timeString}`;
                             },
                             label: function(context) {
                                 const producer = producers.find(p => p.name === context.dataset.label);
@@ -166,12 +165,12 @@ class ProducerTracker {
             producerCard.innerHTML = `
                 <div class="producer-card">
                     <div class="producer-profile">
-                        <img src="${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                        <img src="${imageName}.png" alt="${producer.fullName}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                         <span class="fallback-icon">👤</span>
                     </div>
                     <div class="producer-info">
-                        <div class="producer-name">${producer.name}</div>
-                        <div class="producer-total">${formatNumber(stats.total)}</div>
+                        <div class="producer-name">${producer.fullName}</div>
+                        <div class="producer-total">${formatNumber(stats.total)} Views</div>
                         <div class="producer-breakdown">
                             <span class="youtube-count">YT: ${formatNumber(stats.youtube)}</span>
                             <span class="tiktok-count">TT: ${formatNumber(stats.tiktok)}</span>
@@ -280,22 +279,26 @@ class ProducerTracker {
         const ctx = document.getElementById(`chart-${video.id}`);
         if (!ctx) return;
 
-        const labels = video.youtubeViews.map(view => {
-            const date = new Date(view.date);
-            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-        });
-
-        // Create stacked area chart for YouTube and TikTok
-        const youtubeData = video.youtubeViews.map(view => view.count);
-        const tiktokData = video.tiktokViews.map(view => view.count);
+        // Create datasets with actual timestamps for linear time scaling
+        const youtubeData = video.youtubeViews.map(view => ({
+            x: new Date(view.date),
+            y: view.count
+        }));
+        
+        const tiktokData = video.tiktokViews.map(view => ({
+            x: new Date(view.date),
+            y: view.count
+        }));
 
         // Calculate total views for each date
-        const totalData = youtubeData.map((youtube, index) => youtube + tiktokData[index]);
+        const totalData = youtubeData.map((youtube, index) => ({
+            x: youtube.x,
+            y: youtube.y + tiktokData[index].y
+        }));
 
         const chart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
                 datasets: [
                     {
                         label: 'YouTube',
@@ -363,6 +366,18 @@ class ProducerTracker {
                         borderColor: '#ffd700',
                         borderWidth: 1,
                         callbacks: {
+                            title: function(context) {
+                                const date = new Date(context[0].parsed.x);
+                                const timeString = date.toLocaleTimeString('en-US', { 
+                                    hour: 'numeric', 
+                                    hour12: true 
+                                });
+                                const dateString = date.toLocaleDateString('en-US', { 
+                                    month: 'long', 
+                                    day: 'numeric' 
+                                });
+                                return `${dateString}, ${timeString}`;
+                            },
                             label: function(context) {
                                 return `${context.dataset.label}: ${formatNumber(context.parsed.y)} views`;
                             }
@@ -371,6 +386,13 @@ class ProducerTracker {
                 },
                 scales: {
                     x: {
+                        type: 'time',
+                        time: {
+                            unit: 'day',
+                            displayFormats: {
+                                day: 'MMM d'
+                            }
+                        },
                         grid: {
                             display: false
                         },

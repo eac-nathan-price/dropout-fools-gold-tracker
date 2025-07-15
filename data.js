@@ -6,21 +6,25 @@ const producers = [
     {
         id: "producer_1",
         name: "Trapp",
+        fullName: "Mike Trapp",
         color: "#10b981" // Emerald
     },
     {
         id: "producer_2", 
         name: "Rekha",
+        fullName: "Rekha Shankar",
         color: "#06b6d4" // Cyan
     },
     {
         id: "producer_3",
         name: "Jordan", 
+        fullName: "Jordan Myrick",
         color: "#6366f1" // Indigo
     },
     {
         id: "producer_4",
         name: "Sam",
+        fullName: "Sam Reich",
         color: "#8b5cf6" // Purple
     }
 ];
