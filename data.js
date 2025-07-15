@@ -6,7 +6,7 @@ const producers = [
     {
         id: "producer_1",
         name: "Trapp",
-        color: "#6366f1" // Indigo
+        color: "#10b981" // Emerald
     },
     {
         id: "producer_2", 
@@ -16,12 +16,12 @@ const producers = [
     {
         id: "producer_3",
         name: "Jordan", 
-        color: "#8b5cf6" // Purple
+        color: "#6366f1" // Indigo
     },
     {
         id: "producer_4",
         name: "Sam",
-        color: "#10b981" // Emerald
+        color: "#8b5cf6" // Purple
     }
 ];
 
