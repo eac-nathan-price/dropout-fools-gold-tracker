@@ -529,41 +529,47 @@ class ProducerTracker {
     }
 
     showYouTubePlayer(videoLink: string, videoTitle: string) {
-        // Create modal overlay
-        const modal = document.createElement('div');
-        modal.className = 'youtube-modal-overlay';
-        modal.innerHTML = `
-            <div class="youtube-modal">
-                <div class="youtube-modal-header">
-                    <h3>${videoTitle}</h3>
-                    <button class="close-button">&times;</button>
-                </div>
-                <div class="youtube-modal-content">
-                    <iframe 
-                        width="560" 
-                        height="315" 
-                        src="${videoLink.replace('/shorts/', '/embed/')}" 
-                        frameborder="0" 
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                        allowfullscreen>
-                    </iframe>
-                </div>
+        // Remove existing player if present
+        const existingPlayer = document.querySelector('.youtube-player-fixed');
+        if (existingPlayer) {
+            existingPlayer.remove();
+        }
+
+        // Create fixed player in bottom right
+        const player = document.createElement('div');
+        player.className = 'youtube-player-fixed';
+        player.innerHTML = `
+            <div class="youtube-player-header">
+                <h4>${videoTitle}</h4>
+                <button class="close-button">&times;</button>
+            </div>
+            <div class="youtube-player-content">
+                <iframe 
+                    width="340" 
+                    height="640" 
+                    src="${videoLink.replace('/shorts/', '/embed/')}?autoplay=1&rel=0" 
+                    frameborder="0" 
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                    allowfullscreen
+                    loading="lazy">
+                </iframe>
             </div>
         `;
         
-        document.body.appendChild(modal);
+        document.body.appendChild(player);
         
-        // Close modal when clicking overlay or close button
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal || (e.target as HTMLElement).classList.contains('close-button')) {
-                document.body.removeChild(modal);
-            }
-        });
+        // Close player when clicking close button
+        const closeButton = player.querySelector('.close-button') as HTMLElement;
+        if (closeButton) {
+            closeButton.addEventListener('click', () => {
+                player.remove();
+            });
+        }
         
-        // Close modal with Escape key
+        // Close player with Escape key
         document.addEventListener('keydown', function closeOnEscape(e) {
             if (e.key === 'Escape') {
-                document.body.removeChild(modal);
+                player.remove();
                 document.removeEventListener('keydown', closeOnEscape);
             }
         });
