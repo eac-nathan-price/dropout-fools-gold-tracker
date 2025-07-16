@@ -16,19 +16,8 @@ export interface Video {
     producers: string[];
     youtubeViews: number[];
     tiktokViews: number[];
-    instagramViews?: number[];
+    instagramViews: number[];
 }
-
-// Single list of all datetime strings - shared across all videos
-export const allDates: string[] = [
-    "2025-07-14T16:00:00-07:00",
-    "2025-07-15T00:00:00-07:00",
-    "2025-07-15T08:00:00-07:00",
-    "2025-07-15T16:00:00-07:00",
-    "2025-07-15T20:00:00-07:00",
-    "2025-07-16T06:00:00-07:00",
-    "2025-07-16T10:00:00-07:00"
-];
 
 export const producers: Producer[] = [
     {
@@ -55,6 +44,17 @@ export const producers: Producer[] = [
         fullName: "Sam Reich",
         color: "#8b5cf6" // Purple
     }
+];
+
+// Single list of all sample times - shared across all videos
+export const sampleTimes: Date[] = [
+    new Date("2025-07-14T16:00:00-07:00"),
+    new Date("2025-07-15T00:00:00-07:00"),
+    new Date("2025-07-15T08:00:00-07:00"),
+    new Date("2025-07-15T16:00:00-07:00"),
+    new Date("2025-07-15T20:00:00-07:00"),
+    new Date("2025-07-16T06:00:00-07:00"),
+    new Date("2025-07-16T10:00:00-07:00")
 ];
 
 export const videoData: Video[] = [
@@ -150,19 +150,14 @@ export const videoData: Video[] = [
     }
 ];
 
-// Helper function to get all unique dates from all videos
-export function getAllDates(): string[] {
-    return allDates;
-}
-
 // Helper function to get producer by ID
 export function getProducerById(id: string): Producer | undefined {
     return producers.find(producer => producer.id === id);
 }
 
 // Helper function to calculate producer views for a specific date and platform
-export function getProducerViewsForDate(producerId: string, date: string, platform: 'youtube' | 'tiktok' | 'instagram' | 'all' = 'all'): number {
-    const dateIndex = allDates.indexOf(date);
+export function getProducerViewsForDate(producerId: string, date: Date, platform: 'youtube' | 'tiktok' | 'instagram' | 'all' = 'all'): number {
+    const dateIndex = sampleTimes.indexOf(date);
     if (dateIndex === -1) return 0;
     
     let totalViews = 0;
@@ -202,17 +197,9 @@ export function formatNumber(num: number): string {
 
 // Helper function to get latest total views for a video
 export function getLatestTotalViews(video: Video): number {
-    const latestIndex = allDates.length - 1;
+    const latestIndex = sampleTimes.length - 1;
     const latestYoutube = video.youtubeViews[latestIndex] || 0;
     const latestTiktok = video.tiktokViews[latestIndex] || 0;
     const latestInstagram = video.instagramViews ? video.instagramViews[latestIndex] || 0 : 0;
     return latestYoutube + latestTiktok + latestInstagram;
 }
-
-// Helper function to get total views for a video
-export function getTotalViews(video: Video): number {
-    const youtubeTotal = video.youtubeViews.reduce((sum, count) => sum + count, 0);
-    const tiktokTotal = video.tiktokViews.reduce((sum, count) => sum + count, 0);
-    const instagramTotal = video.instagramViews ? video.instagramViews.reduce((sum, count) => sum + count, 0) : 0;
-    return youtubeTotal + tiktokTotal + instagramTotal;
-} 
