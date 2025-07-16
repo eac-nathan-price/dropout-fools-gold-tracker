@@ -394,10 +394,10 @@ class ProducerTracker {
         const isBestInstagram = this.isBestPerformer(video.id, 'instagram', instagramGrowth);
         const isBestOverall = this.isBestPerformer(video.id, 'overall', totalGrowth);
         
-        if (isBestYouTube) indicators.push('<span class="performance-arrow youtube-arrow" title="Best YouTube performer in last 24h"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg></span>');
-        if (isBestTiktok) indicators.push('<span class="performance-arrow tiktok-arrow" title="Best TikTok performer in last 24h"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg></span>');
-        if (isBestInstagram) indicators.push('<span class="performance-arrow instagram-arrow" title="Best Instagram performer in last 24h"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg></span>');
-        if (isBestOverall) indicators.push('<span class="performance-arrow overall-arrow" title="Best overall performer in last 24h"><svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14l5-5 5 5z"/></svg></span>');
+        if (isBestYouTube) indicators.push(`<div class="performance-arrow-container" title="Best YouTube performer in last 24h (+${formatNumber(youtubeGrowth)} views)"><span class="performance-arrow youtube-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22L12 6M7 11L12 6L17 11"/></svg></span></div>`);
+        if (isBestTiktok) indicators.push(`<div class="performance-arrow-container" title="Best TikTok performer in last 24h (+${formatNumber(tiktokGrowth)} views)"><span class="performance-arrow tiktok-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22L12 6M7 11L12 6L17 11"/></svg></span></div>`);
+        if (isBestInstagram) indicators.push(`<div class="performance-arrow-container" title="Best Instagram performer in last 24h (+${formatNumber(instagramGrowth)} views)"><span class="performance-arrow instagram-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22L12 6M7 11L12 6L17 11"/></svg></span></div>`);
+        if (isBestOverall) indicators.push(`<div class="performance-arrow-container" title="Best overall performer in last 24h (+${formatNumber(totalGrowth)} views)"><span class="performance-arrow overall-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22L12 6M7 11L12 6L17 11"/></svg></span></div>`);
         
         return indicators.join('');
     }

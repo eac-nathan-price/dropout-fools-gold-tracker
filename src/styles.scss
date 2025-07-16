@@ -101,7 +101,6 @@ body {
     align-items: center;
     margin-bottom: 0;
     padding-bottom: 0;
-    border-bottom: 2px solid #333333;
 }
 
 .chart-header h2 {
@@ -151,6 +150,7 @@ body {
     align-items: center;
     padding: 8px 0;
     margin-bottom: 12px;
+    border-bottom: 2px solid #333333;
 }
 
 .platform-links {
@@ -198,10 +198,27 @@ body {
     align-items: center;
 }
 
+.performance-arrow-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+}
+
 .performance-arrow {
     animation: pulse 2s ease-in-out infinite;
     display: flex;
     align-items: center;
+}
+
+.performance-arrow svg {
+    width: 24px;
+    height: 24px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
 }
 
 .youtube-arrow {
