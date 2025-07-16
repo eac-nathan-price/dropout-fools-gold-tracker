@@ -237,6 +237,21 @@ body {
     color: #ffd700;
 }
 
+.value-indicator-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+}
+
+.value-indicator {
+    color: #10b981;
+    font-weight: bold;
+    font-size: 18px;
+}
+
 @keyframes pulse {
     0%, 100% { 
         transform: scale(1);

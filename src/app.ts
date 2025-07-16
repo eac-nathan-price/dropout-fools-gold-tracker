@@ -318,6 +318,9 @@ class ProducerTracker {
         // Get performance indicators for last 24 hours
         const performanceIndicators = this.getPerformanceIndicators(video);
         
+        // Check if this video has the best views-per-dollar ratio
+        const isBestValue = this.isBestValuePerDollar(video);
+        
         // Create producer bubbles
         const producerBubbles = producers.map(producerId => {
             const producer = getProducerById(producerId);
@@ -353,6 +356,7 @@ class ProducerTracker {
                 </div>
                 <div class="performance-indicators">
                     ${performanceIndicators}
+                    ${isBestValue ? '<div class="value-indicator-container" title="Best views per dollar ratio"><span class="value-indicator">$</span></div>' : ''}
                 </div>
                 <div class="total-contribution">
                     $${totalContribution}
@@ -394,10 +398,10 @@ class ProducerTracker {
         const isBestInstagram = this.isBestPerformer(video.id, 'instagram', instagramGrowth);
         const isBestOverall = this.isBestPerformer(video.id, 'overall', totalGrowth);
         
-        if (isBestYouTube) indicators.push(`<div class="performance-arrow-container" title="Best YouTube performer in last 24h (+${formatNumber(youtubeGrowth)} views)"><span class="performance-arrow youtube-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22L12 6M7 11L12 6L17 11"/></svg></span></div>`);
-        if (isBestTiktok) indicators.push(`<div class="performance-arrow-container" title="Best TikTok performer in last 24h (+${formatNumber(tiktokGrowth)} views)"><span class="performance-arrow tiktok-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22L12 6M7 11L12 6L17 11"/></svg></span></div>`);
-        if (isBestInstagram) indicators.push(`<div class="performance-arrow-container" title="Best Instagram performer in last 24h (+${formatNumber(instagramGrowth)} views)"><span class="performance-arrow instagram-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22L12 6M7 11L12 6L17 11"/></svg></span></div>`);
-        if (isBestOverall) indicators.push(`<div class="performance-arrow-container" title="Best overall performer in last 24h (+${formatNumber(totalGrowth)} views)"><span class="performance-arrow overall-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 22L12 6M7 11L12 6L17 11"/></svg></span></div>`);
+        if (isBestYouTube) indicators.push(`<div class="performance-arrow-container" title="Best YouTube performer in last 24h (+${formatNumber(youtubeGrowth)} views)"><span class="performance-arrow youtube-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16L12 4M7 9L12 4L17 9"/><text x="12" y="22" text-anchor="middle" font-size="8" font-weight="100" letter-spacing="2" fill="currentColor">24</text></svg></span></div>`);
+        if (isBestTiktok) indicators.push(`<div class="performance-arrow-container" title="Best TikTok performer in last 24h (+${formatNumber(tiktokGrowth)} views)"><span class="performance-arrow tiktok-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16L12 4M7 9L12 4L17 9"/><text x="12" y="22" text-anchor="middle" font-size="8" font-weight="100" letter-spacing="2" fill="currentColor">24</text></svg></span></div>`);
+        if (isBestInstagram) indicators.push(`<div class="performance-arrow-container" title="Best Instagram performer in last 24h (+${formatNumber(instagramGrowth)} views)"><span class="performance-arrow instagram-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16L12 4M7 9L12 4L17 9"/><text x="12" y="22" text-anchor="middle" font-size="8" font-weight="100" letter-spacing="2" fill="currentColor">24</text></svg></span></div>`);
+        if (isBestOverall) indicators.push(`<div class="performance-arrow-container" title="Best overall performer in last 24h (+${formatNumber(totalGrowth)} views)"><span class="performance-arrow overall-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16L12 4M7 9L12 4L17 9"/><text x="12" y="22" text-anchor="middle" font-size="8" font-weight="100" letter-spacing="2" fill="currentColor">24</text></svg></span></div>`);
         
         return indicators.join('');
     }
@@ -430,6 +434,26 @@ class ProducerTracker {
         });
         
         return growth === maxGrowth && growth > 0;
+    }
+
+    isBestValuePerDollar(video: Video): boolean {
+        const totalViews = getLatestTotalViews(video);
+        const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0);
+        const viewsPerDollar = totalViews / totalContribution;
+        
+        let maxViewsPerDollar = 0;
+        
+        videoData.forEach(v => {
+            const vTotalViews = getLatestTotalViews(v);
+            const vTotalContribution = Object.values(v.contributions).reduce((sum, amount) => sum + amount, 0);
+            const vViewsPerDollar = vTotalViews / vTotalContribution;
+            
+            if (vViewsPerDollar > maxViewsPerDollar) {
+                maxViewsPerDollar = vViewsPerDollar;
+            }
+        });
+        
+        return viewsPerDollar === maxViewsPerDollar && viewsPerDollar > 0;
     }
 
     renderVideoChart(video: Video) {
