@@ -4,6 +4,7 @@ import 'chartjs-adapter-date-fns';
 import {
     producers,
     videoData,
+    allDates,
     getAllDates,
     getProducerById,
     getProducerViewsForDate,
@@ -252,21 +253,12 @@ class ProducerTracker {
                 const sharePercentage = 1 / video.producers.length;
                 
                 // Always calculate all platform totals for display in cards
-                const youtubeView = video.youtubeViews.find(v => v.date === latestDate);
-                if (youtubeView) {
-                    youtubeTotal += youtubeView.count * sharePercentage;
-                }
-                
-                const tiktokView = video.tiktokViews.find(v => v.date === latestDate);
-                if (tiktokView) {
-                    tiktokTotal += tiktokView.count * sharePercentage;
-                }
+                const latestIndex = allDates.length - 1;
+                youtubeTotal += video.youtubeViews[latestIndex] * sharePercentage;
+                tiktokTotal += video.tiktokViews[latestIndex] * sharePercentage;
                 
                 if (video.instagramViews) {
-                    const instagramView = video.instagramViews.find(v => v.date === latestDate);
-                    if (instagramView) {
-                        instagramTotal += instagramView.count * sharePercentage;
-                    }
+                    instagramTotal += video.instagramViews[latestIndex] * sharePercentage;
                 }
             }
         });
@@ -360,25 +352,25 @@ class ProducerTracker {
         if (!ctx) return;
 
         // Create datasets with actual timestamps for linear time scaling
-        const youtubeData = video.youtubeViews.map(view => ({
-            x: new Date(view.date),
-            y: view.count
+        const youtubeData = allDates.map((date, index) => ({
+            x: new Date(date),
+            y: video.youtubeViews[index]
         }));
         
-        const tiktokData = video.tiktokViews.map(view => ({
-            x: new Date(view.date),
-            y: view.count
+        const tiktokData = allDates.map((date, index) => ({
+            x: new Date(date),
+            y: video.tiktokViews[index]
         }));
 
-        const instagramData = video.instagramViews ? video.instagramViews.map(view => ({
-            x: new Date(view.date),
-            y: view.count
+        const instagramData = video.instagramViews ? allDates.map((date, index) => ({
+            x: new Date(date),
+            y: video.instagramViews![index]
         })) : [];
 
         // Calculate total views for each date
-        const totalData = youtubeData.map((youtube, index) => ({
-            x: youtube.x,
-            y: youtube.y + tiktokData[index].y + (instagramData[index] ? instagramData[index].y : 0)
+        const totalData = allDates.map((date, index) => ({
+            x: new Date(date),
+            y: video.youtubeViews[index] + video.tiktokViews[index] + (video.instagramViews ? video.instagramViews[index] : 0)
         }));
 
         const datasets = [
