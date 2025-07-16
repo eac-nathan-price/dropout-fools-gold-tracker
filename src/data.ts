@@ -163,116 +163,116 @@ export const videoMetadata: VideoMetadataCollection = {
         title: "Peel Robalino",
         links: {
             youtube: "https://www.youtube.com/shorts/gMpx4A2lRTE",
-            tiktok: "https://www.youtube.com/shorts/gMpx4A2lRTE",
-            instagram: "https://www.youtube.com/shorts/gMpx4A2lRTE"
+            tiktok: "https://www.tiktok.com/@gamechangershow/video/7527082801120677133",
+            instagram: "https://www.instagram.com/reel/DMG0jk2tbeR/"
         },
         contributions: { // Trapp only
-            "trapp": 1000
+            "trapp": 550
         }
     },
     "annas-king": {
         title: "Anna's King for a Day",
         links: {
             youtube: "https://www.youtube.com/shorts/UjHk90dxX20",
-            tiktok: "https://www.youtube.com/shorts/UjHk90dxX20",
-            instagram: "https://www.youtube.com/shorts/UjHk90dxX20"
+            tiktok: "https://www.tiktok.com/@gamechangershow/video/7527078952171523341",
+            instagram: "https://www.instagram.com/reel/DMGy8RuNDqI/"
         },
         contributions: { // Jordan only
-            "jordan": 1000
+            "jordan": 1500
         }
     },
     "katies-d20": {
         title: "Katie's D20 on a Bus",
         links: {
             youtube: "https://www.youtube.com/shorts/5feqZBLXrMg",
-            tiktok: "https://www.youtube.com/shorts/5feqZBLXrMg",
-            instagram: "https://www.youtube.com/shorts/5feqZBLXrMg"
+            tiktok: "https://www.tiktok.com/@gamechangershow/video/7527080453610704183",
+            instagram: "https://www.instagram.com/reel/DMGzkMNNMXg/"
         },
         contributions: { // Rekha only
-            "rekha": 1000
+            "rekha": 3500
         }
     },
     "erikas-haircut": {
         title: "Erika's Haircut",
         links: {
             youtube: "https://www.youtube.com/shorts/wQVIfuNIc9I",
-            tiktok: "https://www.youtube.com/shorts/wQVIfuNIc9I",
-            instagram: "https://www.youtube.com/shorts/wQVIfuNIc9I"
+            tiktok: "https://www.tiktok.com/@gamechangershow/video/7527086113614318862",
+            instagram: "https://www.instagram.com/reel/DMG2ELMvZdg/"
         },
         contributions: { // Jordan only
-            "jordan": 1000
+            "jordan": 506
         }
     },
     "sephies-car-wash": {
         title: "Sephie's Sexy Car Wash",
         links: {
             youtube: "https://www.youtube.com/shorts/HD5pyGbO_Is",
-            tiktok: "https://www.youtube.com/shorts/HD5pyGbO_Is",
-            instagram: "https://www.youtube.com/shorts/HD5pyGbO_Is"
+            tiktok: "https://www.tiktok.com/@gamechangershow/video/7527082014449716494",
+            instagram: "https://www.instagram.com/reel/DMG0OcPpSQO/"
         },
         contributions: { // Rekha and Jordan (50/50)
-            "rekha": 500,
-            "jordan": 500
+            "rekha": 1850,
+            "jordan": 1850
         }
     },
     "grants-crack": {
         title: "Grant's Crack",
         links: {
             youtube: "https://www.youtube.com/shorts/1lnl0jYln8s",
-            tiktok: "https://www.youtube.com/shorts/1lnl0jYln8s",
-            instagram: "https://www.youtube.com/shorts/1lnl0jYln8s"
+            tiktok: "https://www.tiktok.com/@gamechangershow/video/7527083827689229582",
+            instagram: "https://www.instagram.com/reel/DMG1BIPM41Z/"
         },
         contributions: { // Trapp only
-            "trapp": 1000
+            "trapp": 1201
         }
     },
     "jonnys-puppy-bowl": {
         title: "Jonny's Human Puppy Bowl",
         links: {
             youtube: "https://www.youtube.com/shorts/aagwlycxv_k",
-            tiktok: "https://www.youtube.com/shorts/aagwlycxv_k",
-            instagram: "https://www.youtube.com/shorts/aagwlycxv_k"
+            tiktok: "https://www.tiktok.com/@gamechangershow/video/7527084871580142861",
+            instagram: "https://www.instagram.com/reel/DMG1d62Mhmf/"
         },
         contributions: { // Trapp and Rekha (50/50)
-            "trapp": 500,
-            "rekha": 500
+            "trapp": 2500,
+            "rekha": 2500
         }
     },
     "lily-izzys-milk": {
         title: "Lily & Izzy's Milk Taste Test",
         links: {
             youtube: "https://www.youtube.com/shorts/nfwmaVlp_hY",
-            tiktok: "https://www.youtube.com/shorts/nfwmaVlp_hY",
-            instagram: "https://www.youtube.com/shorts/nfwmaVlp_hY"
+            tiktok: "https://www.tiktok.com/@gamechangershow/video/7527085610322890039",
+            instagram: "https://www.instagram.com/reel/DMG11avO8qa/"
         },
         contributions: { // Jordan only
-            "jordan": 1000
+            "jordan": 6144
         }
     },
     "izzys-buttholes": {
         title: "Izzy's Buttholes",
         links: {
             youtube: "https://www.youtube.com/shorts/Wm8SMsmWCts",
-            tiktok: "https://www.youtube.com/shorts/Wm8SMsmWCts",
-            instagram: "https://www.youtube.com/shorts/Wm8SMsmWCts"
+            tiktok: "https://www.tiktok.com/@gamechangershow/video/7527086642415422734",
+            instagram: "https://www.instagram.com/reel/DMG2SXRMojo/"
         },
         contributions: { // Trapp and Rekha (50/50)
-            "trapp": 500,
-            "rekha": 500
+            "trapp": 2000,
+            "rekha": 2000
         }
     },
     "vics-brennans-exit": {
         title: "Vic's Brennan's Exit Video",
         links: {
             youtube: "https://www.youtube.com/shorts/oO4kgmYivoQ",
-            tiktok: "https://www.youtube.com/shorts/oO4kgmYivoQ",
-            instagram: "https://www.youtube.com/shorts/oO4kgmYivoQ"
+            tiktok: "https://www.tiktok.com/@gamechangershow/video/7527087942339267895",
+            instagram: "https://www.instagram.com/reel/DMG24Zjyg1j/"
         },
         contributions: { // All producers (25% each)
-            "trapp": 250,
-            "rekha": 250,
-            "jordan": 250,
-            "sam": 250
+            "trapp": 3749,
+            "rekha": 150,
+            "jordan": 0,
+            "sam": 16101
         }
     }
 };
