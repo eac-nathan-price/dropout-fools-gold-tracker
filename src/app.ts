@@ -382,14 +382,14 @@ class ProducerTracker {
     getPerformanceIndicators(video: Video): string {
         const indicators: string[] = [];
         
-        // Get the last two data points (24 hours)
+        // Get the most recent data point and the one closest to 24 hours ago
         const lastIndex = sampleTimes.length - 1;
-        const previousIndex = Math.max(0, lastIndex - 1);
+        const prevDayIndex = this.get24HourPreviousIndex();
         
         // Calculate 24-hour growth for each platform
-        const youtubeGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[previousIndex];
-        const tiktokGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[previousIndex];
-        const instagramGrowth = video.instagramViews ? video.instagramViews[lastIndex] - video.instagramViews[previousIndex] : 0;
+        const youtubeGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
+        const tiktokGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
+        const instagramGrowth = video.instagramViews ? video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex] : 0;
         const totalGrowth = youtubeGrowth + tiktokGrowth + instagramGrowth;
         
         // Check if this video is the best performer in each category
@@ -406,9 +406,28 @@ class ProducerTracker {
         return indicators.join('');
     }
 
+    get24HourPreviousIndex(): number {
+        const lastIndex = sampleTimes.length - 1;
+        const currentTime = sampleTimes[lastIndex];
+        const targetTime = new Date(currentTime.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
+        
+        let closestIndex = 0;
+        let minDifference = Math.abs(sampleTimes[0].getTime() - targetTime.getTime());
+        
+        for (let i = 1; i < sampleTimes.length; i++) {
+            const difference = Math.abs(sampleTimes[i].getTime() - targetTime.getTime());
+            if (difference < minDifference) {
+                minDifference = difference;
+                closestIndex = i;
+            }
+        }
+        
+        return closestIndex;
+    }
+
     isBestPerformer(videoId: string, platform: 'youtube' | 'tiktok' | 'instagram' | 'overall', growth: number): boolean {
         const lastIndex = sampleTimes.length - 1;
-        const previousIndex = Math.max(0, lastIndex - 1);
+        const prevDayIndex = this.get24HourPreviousIndex();
         
         let maxGrowth = -1;
         
@@ -416,15 +435,15 @@ class ProducerTracker {
             let videoGrowth = 0;
             
             if (platform === 'youtube') {
-                videoGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[previousIndex];
+                videoGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
             } else if (platform === 'tiktok') {
-                videoGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[previousIndex];
+                videoGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
             } else if (platform === 'instagram') {
-                videoGrowth = video.instagramViews ? video.instagramViews[lastIndex] - video.instagramViews[previousIndex] : 0;
+                videoGrowth = video.instagramViews ? video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex] : 0;
             } else if (platform === 'overall') {
-                const youtubeGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[previousIndex];
-                const tiktokGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[previousIndex];
-                const instagramGrowth = video.instagramViews ? video.instagramViews[lastIndex] - video.instagramViews[previousIndex] : 0;
+                const youtubeGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
+                const tiktokGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
+                const instagramGrowth = video.instagramViews ? video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex] : 0;
                 videoGrowth = youtubeGrowth + tiktokGrowth + instagramGrowth;
             }
             
