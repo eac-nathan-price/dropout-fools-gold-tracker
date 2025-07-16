@@ -9,6 +9,7 @@ import {
     getProducerViewsForDate,
     formatNumber,
     getLatestTotalViews,
+    getProducersFromContributions,
     Video
 } from './data';
 
@@ -237,12 +238,13 @@ class ProducerTracker {
         let soloVideoCount = 0;
         
         videoData.forEach(video => {
-            if (video.producers.includes(producerId)) {
+            const producers = getProducersFromContributions(video.contributions);
+            if (producers.includes(producerId)) {
                 videoCount++;
-                if (video.producers.length === 1) {
+                if (producers.length === 1) {
                     soloVideoCount++;
                 }
-                const sharePercentage = 1 / video.producers.length;
+                const sharePercentage = 1 / producers.length;
                 
                 // Always calculate all platform totals for display in cards
                 const latestIndex = sampleTimes.length - 1;
@@ -307,19 +309,22 @@ class ProducerTracker {
         
         // Calculate total views and producer share
         const totalViews = getLatestTotalViews(video);
-        const producerShare = totalViews / video.producers.length;
+        const producers = getProducersFromContributions(video.contributions);
+        const producerShare = totalViews / producers.length;
         
         // Create producer bubbles
-        const producerBubbles = video.producers.map(producerId => {
+        const producerBubbles = producers.map(producerId => {
             const producer = getProducerById(producerId);
             if (!producer) return '';
             const imageName = producer.name.toLowerCase();
-            return `<span class="producer-bubble" style="background: ${producer.color};" title="${producer.fullName}: ${formatNumber(producerShare)} views"><span class="producer-icon"><img src="/assets/${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="fallback-icon">👤</span></span>${producer.name}</span>`;
+            const contribution = video.contributions[producerId] || 0;
+            const tooltipText = `${producer.fullName}: $${contribution} - ${formatNumber(producerShare)} views`;
+            return `<span class="producer-bubble" style="background: ${producer.color};" title="${tooltipText}"><span class="producer-icon"><img src="/assets/${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="fallback-icon">👤</span></span>${producer.name}</span>`;
         }).join('');
 
         container.innerHTML = `
             <div class="chart-header">
-                <div class="chart-title clickable-title" data-video-link="${video.link}">${video.title}</div>
+                <div class="chart-title clickable-title" data-video-link="${video.links.youtube}">${video.title}</div>
                 <div class="total-views-display">${formatNumber(getLatestTotalViews(video))}</div>
             </div>
             <canvas id="chart-${video.id}" width="400" height="200"></canvas>
@@ -332,7 +337,7 @@ class ProducerTracker {
         const titleElement = container.querySelector('.clickable-title') as HTMLElement;
         if (titleElement) {
             titleElement.addEventListener('click', () => {
-                this.showYouTubePlayer(video.link, video.title);
+                this.showYouTubePlayer(video.links.youtube, video.title);
             });
         }
         

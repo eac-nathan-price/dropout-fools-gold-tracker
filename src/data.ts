@@ -26,8 +26,14 @@ export interface VideoViewData {
 export interface Video {
     id: string;
     title: string;
-    link: string;
-    producers: string[];
+    links: {
+        youtube: string;
+        tiktok: string;
+        instagram: string;
+    };
+    contributions: {
+        [producerId: string]: number;
+    };
     youtubeViews: number[];
     tiktokViews: number[];
     instagramViews: number[];
@@ -47,8 +53,14 @@ export interface ViewData {
 export interface VideoMetadataCollection {
     [videoId: string]: {
         title: string;
-        link: string;
-        producers: string[];
+        links: {
+            youtube: string;
+            tiktok: string;
+            instagram: string;
+        };
+        contributions: {
+            [producerId: string]: number; // Dollar amount contributed
+        };
     };
 }
 
@@ -149,53 +161,119 @@ export const viewData: ViewData = {
 export const videoMetadata: VideoMetadataCollection = {
     "peel-robalino": {
         title: "Peel Robalino",
-        link: "https://www.youtube.com/shorts/gMpx4A2lRTE",
-        producers: ["trapp"] // Trapp only
+        links: {
+            youtube: "https://www.youtube.com/shorts/gMpx4A2lRTE",
+            tiktok: "https://www.youtube.com/shorts/gMpx4A2lRTE",
+            instagram: "https://www.youtube.com/shorts/gMpx4A2lRTE"
+        },
+        contributions: { // Trapp only
+            "trapp": 1000
+        }
     },
     "annas-king": {
         title: "Anna's King for a Day",
-        link: "https://www.youtube.com/shorts/UjHk90dxX20",
-        producers: ["jordan"] // Jordan only
+        links: {
+            youtube: "https://www.youtube.com/shorts/UjHk90dxX20",
+            tiktok: "https://www.youtube.com/shorts/UjHk90dxX20",
+            instagram: "https://www.youtube.com/shorts/UjHk90dxX20"
+        },
+        contributions: { // Jordan only
+            "jordan": 1000
+        }
     },
     "katies-d20": {
         title: "Katie's D20 on a Bus",
-        link: "https://www.youtube.com/shorts/5feqZBLXrMg",
-        producers: ["rekha"] // Rekha only
+        links: {
+            youtube: "https://www.youtube.com/shorts/5feqZBLXrMg",
+            tiktok: "https://www.youtube.com/shorts/5feqZBLXrMg",
+            instagram: "https://www.youtube.com/shorts/5feqZBLXrMg"
+        },
+        contributions: { // Rekha only
+            "rekha": 1000
+        }
     },
     "erikas-haircut": {
         title: "Erika's Haircut",
-        link: "https://www.youtube.com/shorts/wQVIfuNIc9I",
-        producers: ["jordan"] // Jordan only
+        links: {
+            youtube: "https://www.youtube.com/shorts/wQVIfuNIc9I",
+            tiktok: "https://www.youtube.com/shorts/wQVIfuNIc9I",
+            instagram: "https://www.youtube.com/shorts/wQVIfuNIc9I"
+        },
+        contributions: { // Jordan only
+            "jordan": 1000
+        }
     },
     "sephies-car-wash": {
         title: "Sephie's Sexy Car Wash",
-        link: "https://www.youtube.com/shorts/HD5pyGbO_Is",
-        producers: ["rekha", "jordan"] // Rekha and Jordan (50/50)
+        links: {
+            youtube: "https://www.youtube.com/shorts/HD5pyGbO_Is",
+            tiktok: "https://www.youtube.com/shorts/HD5pyGbO_Is",
+            instagram: "https://www.youtube.com/shorts/HD5pyGbO_Is"
+        },
+        contributions: { // Rekha and Jordan (50/50)
+            "rekha": 500,
+            "jordan": 500
+        }
     },
     "grants-crack": {
         title: "Grant's Crack",
-        link: "https://www.youtube.com/shorts/1lnl0jYln8s",
-        producers: ["trapp"] // Trapp only
+        links: {
+            youtube: "https://www.youtube.com/shorts/1lnl0jYln8s",
+            tiktok: "https://www.youtube.com/shorts/1lnl0jYln8s",
+            instagram: "https://www.youtube.com/shorts/1lnl0jYln8s"
+        },
+        contributions: { // Trapp only
+            "trapp": 1000
+        }
     },
     "jonnys-puppy-bowl": {
         title: "Jonny's Human Puppy Bowl",
-        link: "https://www.youtube.com/shorts/aagwlycxv_k",
-        producers: ["trapp", "rekha"] // Trapp and Rekha (50/50)
+        links: {
+            youtube: "https://www.youtube.com/shorts/aagwlycxv_k",
+            tiktok: "https://www.youtube.com/shorts/aagwlycxv_k",
+            instagram: "https://www.youtube.com/shorts/aagwlycxv_k"
+        },
+        contributions: { // Trapp and Rekha (50/50)
+            "trapp": 500,
+            "rekha": 500
+        }
     },
     "lily-izzys-milk": {
         title: "Lily & Izzy's Milk Taste Test",
-        link: "https://www.youtube.com/shorts/nfwmaVlp_hY",
-        producers: ["jordan"] // Jordan only
+        links: {
+            youtube: "https://www.youtube.com/shorts/nfwmaVlp_hY",
+            tiktok: "https://www.youtube.com/shorts/nfwmaVlp_hY",
+            instagram: "https://www.youtube.com/shorts/nfwmaVlp_hY"
+        },
+        contributions: { // Jordan only
+            "jordan": 1000
+        }
     },
     "izzys-buttholes": {
         title: "Izzy's Buttholes",
-        link: "https://www.youtube.com/shorts/Wm8SMsmWCts",
-        producers: ["trapp", "rekha"] // Trapp and Rekha (50/50)
+        links: {
+            youtube: "https://www.youtube.com/shorts/Wm8SMsmWCts",
+            tiktok: "https://www.youtube.com/shorts/Wm8SMsmWCts",
+            instagram: "https://www.youtube.com/shorts/Wm8SMsmWCts"
+        },
+        contributions: { // Trapp and Rekha (50/50)
+            "trapp": 500,
+            "rekha": 500
+        }
     },
     "vics-brennans-exit": {
         title: "Vic's Brennan's Exit Video",
-        link: "https://www.youtube.com/shorts/oO4kgmYivoQ",
-        producers: ["trapp", "rekha", "jordan", "sam"] // All producers (25% each)
+        links: {
+            youtube: "https://www.youtube.com/shorts/oO4kgmYivoQ",
+            tiktok: "https://www.youtube.com/shorts/oO4kgmYivoQ",
+            instagram: "https://www.youtube.com/shorts/oO4kgmYivoQ"
+        },
+        contributions: { // All producers (25% each)
+            "trapp": 250,
+            "rekha": 250,
+            "jordan": 250,
+            "sam": 250
+        }
     }
 };
 
@@ -224,7 +302,9 @@ export const videoData: Video[] = Object.keys(videoMetadata).map(id => {
     }
     return {
         id: id,
-        ...metadata,
+        title: metadata.title,
+        links: metadata.links,
+        contributions: metadata.contributions,
         youtubeViews: viewInfo.youtube,
         tiktokViews: viewInfo.tiktok,
         instagramViews: viewInfo.instagram
@@ -236,8 +316,13 @@ export function getProducerById(id: string): Producer | undefined {
     return producers.find(producer => producer.id === id);
 }
 
+// Helper function to get producers from contributions
+export function getProducersFromContributions(contributions: { [producerId: string]: number }): string[] {
+    return Object.keys(contributions);
+}
+
 // Helper function to get video metadata by ID
-export function getVideoMetadataById(id: string): { title: string; link: string; producers: string[] } | undefined {
+export function getVideoMetadataById(id: string): { title: string; links: { youtube: string; tiktok: string; instagram: string }; contributions: { [producerId: string]: number } } | undefined {
     return videoMetadata[id];
 }
 
@@ -254,8 +339,9 @@ export function getProducerViewsForDate(producerId: string, date: Date, platform
     let totalViews = 0;
     
     videoData.forEach(video => {
-        if (video.producers.includes(producerId)) {
-            const sharePercentage = 1 / video.producers.length; // Split equally between producers
+        const producers = getProducersFromContributions(video.contributions);
+        if (producers.includes(producerId)) {
+            const sharePercentage = 1 / producers.length; // Split equally between producers
             
             if (platform === 'youtube' || platform === 'all') {
                 totalViews += video.youtubeViews[dateIndex] * sharePercentage;
