@@ -188,46 +188,77 @@ class ProducerTracker {
         const loser = producerStats[producerStats.length - 1];
         
         producerStats.forEach(producer => {
-            const imageName = producer.name.toLowerCase();
-            const isWinner = producer.id === winner.id;
-            const isLoser = producer.id === loser.id;
-            
-            const producerCard = document.createElement('div');
-            producerCard.className = 'legend-item';
-            producerCard.dataset.producer = producer.id;
-            producerCard.style.background = producer.color;
-            
-            const crownElement = isWinner ? '<div class="crown">👑</div>' : '';
-            const stinkLines = isLoser ? '<div class="stink-lines"><svg class="stink-line left" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg><svg class="stink-line center" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg><svg class="stink-line right" viewBox="0 0 20 40"><path class="sine-path" d="M10 0 Q15 8 10 16 Q5 24 10 32 Q15 40 10 40" stroke="#8B4513" stroke-width="2" fill="none"/></svg></div>' : '';
-            
-            const shortsText = producer.stats.videoCount === 1 ? 'Short' : 'Shorts';
-            
-            producerCard.innerHTML = `
-                <div class="producer-card">
-                    <div class="producer-profile">
-                        ${crownElement}
-                        ${stinkLines}
-                        <img src="/assets/${imageName}.png" alt="${producer.fullName}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                        <span class="fallback-icon">👤</span>
-                    </div>
-                    <div class="producer-info">
-                        <div class="producer-name">${producer.fullName}</div>
-                        <div class="producer-total">${formatNumber(producer.stats.total)} Views</div>
-                        <div class="producer-breakdown">
-                            <span class="youtube-count">YT: ${formatNumber(producer.stats.youtube)}</span>
-                            <span class="tiktok-count">TT: ${formatNumber(producer.stats.tiktok)}</span>
-                            ${producer.stats.instagram > 0 ? `<span class="instagram-count">IR: ${formatNumber(producer.stats.instagram)}</span>` : ''}
-                        </div>
-                        <div class="producer-video-line">
-                            <span class="producer-video-count">${producer.stats.videoCount} ${shortsText}</span>
-                            <span class="producer-solo-count">${producer.stats.soloVideoCount} Solo</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
+            const producerCard = this.createProducerCard(producer, winner, loser);
             container.appendChild(producerCard);
         });
+    }
+
+    createProducerCard(producer: any, winner: any, loser: any): HTMLElement {
+        const template = document.getElementById('producer-card-template') as HTMLTemplateElement;
+        if (!template) {
+            throw new Error('Producer card template not found');
+        }
+
+        const clone = template.content.cloneNode(true) as DocumentFragment;
+        const card = clone.querySelector('.legend-item') as HTMLElement;
+        
+        if (!card) {
+            throw new Error('Producer card element not found in template');
+        }
+
+        // Set basic properties
+        card.dataset.producer = producer.id;
+        card.style.background = producer.color;
+
+        // Add crown for winner
+        if (producer.id === winner.id) {
+            const crown = document.createElement('div');
+            crown.className = 'crown';
+            crown.textContent = '👑';
+            card.querySelector('.producer-profile')?.appendChild(crown);
+        }
+
+        // Add stink lines for loser
+        if (producer.id === loser.id) {
+            const stinkLines = this.createStinkLines();
+            card.querySelector('.producer-profile')?.appendChild(stinkLines);
+        }
+
+        // Set image and fallback
+        const imageName = producer.name.toLowerCase();
+        const img = card.querySelector('.profile-image') as HTMLImageElement;
+        if (img) {
+            img.src = `/assets/${imageName}.png`;
+            img.alt = producer.fullName;
+        }
+
+        // Set text content
+        const nameElement = card.querySelector('.producer-name');
+        if (nameElement) nameElement.textContent = producer.fullName;
+
+        const totalElement = card.querySelector('.producer-total');
+        if (totalElement) totalElement.textContent = `${formatNumber(producer.stats.total)} Views`;
+
+        const youtubeCount = card.querySelector('.youtube-count');
+        if (youtubeCount) youtubeCount.textContent = `YT: ${formatNumber(producer.stats.youtube)}`;
+
+        const tiktokCount = card.querySelector('.tiktok-count');
+        if (tiktokCount) tiktokCount.textContent = `TT: ${formatNumber(producer.stats.tiktok)}`;
+
+        const instagramCount = card.querySelector('.instagram-count') as HTMLElement;
+        if (instagramCount && producer.stats.instagram > 0) {
+            instagramCount.textContent = `IR: ${formatNumber(producer.stats.instagram)}`;
+            instagramCount.style.display = 'inline';
+        }
+
+        const videoCount = card.querySelector('.producer-video-count');
+        const shortsText = producer.stats.videoCount === 1 ? 'Short' : 'Shorts';
+        if (videoCount) videoCount.textContent = `${producer.stats.videoCount} ${shortsText}`;
+
+        const soloCount = card.querySelector('.producer-solo-count');
+        if (soloCount) soloCount.textContent = `${producer.stats.soloVideoCount} Solo`;
+
+        return card;
     }
 
     getProducerStats(producerId: string) {
@@ -302,74 +333,86 @@ class ProducerTracker {
         }, 100);
     }
 
-    createVideoChartContainer(video: Video) {
-        const container = document.createElement('div');
-        container.className = 'chart-container';
-        container.id = `container-${video.id}`;
-        
-        // Calculate total views and producer share
-        const totalViews = getLatestTotalViews(video);
-        const producers = getProducersFromContributions(video.contributions);
-        const producerShare = totalViews / producers.length;
-        
-        // Calculate total contribution
-        const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0).toLocaleString();
-        
-        // Get performance indicators for last 24 hours
-        const performanceIndicators = this.getPerformanceIndicators(video);
-        
-        // Check if this video has the best views-per-dollar ratio
-        const isBestValue = this.isBestValuePerDollar(video);
-        
-        // Create producer bubbles
-        const producerBubbles = producers.map(producerId => {
-            const producer = getProducerById(producerId);
-            if (!producer) return '';
-            const imageName = producer.name.toLowerCase();
-            const contribution = video.contributions[producerId] || 0;
-            const tooltipText = `${producer.fullName}: $${contribution} - ${formatNumber(producerShare)} views`;
-            return `<span class="producer-bubble" style="background: ${producer.color};" title="${tooltipText}"><span class="producer-icon"><img src="/assets/${imageName}.png" alt="${producer.name}" class="profile-image" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"><span class="fallback-icon">👤</span></span>${producer.name}</span>`;
-        }).join('');
+    createVideoChartContainer(video: Video): HTMLElement {
+        const template = document.getElementById('video-chart-container-template') as HTMLTemplateElement;
+        if (!template) {
+            throw new Error('Video chart container template not found');
+        }
 
-        container.innerHTML = `
-            <div class="chart-header">
-                <div class="chart-title clickable-title" data-video-link="${video.links.youtube}">${video.title}</div>
-                <div class="total-views-display">${formatNumber(getLatestTotalViews(video))}</div>
-            </div>
-            <div class="chart-subheader">
-                <div class="platform-links">
-                    <a href="${video.links.youtube}" target="_blank" class="platform-icon youtube-icon" title="Watch on YouTube">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-                        </svg>
-                    </a>
-                    <a href="${video.links.tiktok}" target="_blank" class="platform-icon tiktok-icon" title="Watch on TikTok">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
-                        </svg>
-                    </a>
-                    <a href="${video.links.instagram}" target="_blank" class="platform-icon instagram-icon" title="Watch on Instagram">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
-                        </svg>
-                    </a>
-                </div>
-                <div class="performance-indicators">
-                    ${performanceIndicators}
-                    ${isBestValue ? '<div class="value-indicator-container" title="Best views per dollar ratio"><span class="value-indicator">$</span></div>' : ''}
-                </div>
-                <div class="total-contribution">
-                    $${totalContribution}
-                </div>
-            </div>
-            <canvas id="chart-${video.id}" width="400" height="200"></canvas>
-            <div class="producer-bubbles">
-                ${producerBubbles}
-            </div>
-        `;
+        const clone = template.content.cloneNode(true) as DocumentFragment;
+        const container = clone.querySelector('.chart-container') as HTMLElement;
+        
+        if (!container) {
+            throw new Error('Chart container element not found in template');
+        }
+
+        // Set container ID
+        container.id = `container-${video.id}`;
+
+        // Set title and link
+        const titleElement = container.querySelector('.clickable-title') as HTMLElement;
+        if (titleElement) {
+            titleElement.textContent = video.title;
+            titleElement.dataset.videoLink = video.links.youtube;
+        }
+
+        // Set total views
+        const totalViewsElement = container.querySelector('.total-views-display');
+        if (totalViewsElement) {
+            totalViewsElement.textContent = formatNumber(getLatestTotalViews(video));
+        }
+
+        // Set platform links
+        const youtubeLink = container.querySelector('.youtube-icon') as HTMLAnchorElement;
+        if (youtubeLink) youtubeLink.href = video.links.youtube;
+
+        const tiktokLink = container.querySelector('.tiktok-icon') as HTMLAnchorElement;
+        if (tiktokLink) tiktokLink.href = video.links.tiktok;
+
+        const instagramLink = container.querySelector('.instagram-icon') as HTMLAnchorElement;
+        if (instagramLink) instagramLink.href = video.links.instagram;
+
+        // Set total contribution
+        const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0).toLocaleString();
+        const contributionElement = container.querySelector('.total-contribution');
+        if (contributionElement) {
+            contributionElement.textContent = `$${totalContribution}`;
+        }
+
+        // Add performance indicators
+        const performanceIndicators = this.getPerformanceIndicators(video);
+        const indicatorsContainer = container.querySelector('.performance-indicators');
+        if (indicatorsContainer) {
+            indicatorsContainer.innerHTML = performanceIndicators;
+        }
+
+                 // Add value indicator if best value
+         const isBestValue = this.isBestValuePerDollar(video);
+         if (isBestValue && indicatorsContainer) {
+             const totalViews = getLatestTotalViews(video);
+             const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0);
+             const viewsPerDollar = Math.round(totalViews / totalContribution);
+             const valueIndicator = this.createBestValueIndicator(viewsPerDollar);
+             indicatorsContainer.appendChild(valueIndicator);
+         }
+
+        // Set canvas ID
+        const canvas = container.querySelector('canvas') as HTMLCanvasElement;
+        if (canvas) {
+            canvas.id = `chart-${video.id}`;
+        }
+
+        // Add producer bubbles
+        const producerBubbles = this.createProducerBubbles(video);
+        const bubblesContainer = container.querySelector('.producer-bubbles');
+        if (bubblesContainer) {
+            bubblesContainer.innerHTML = '';
+            producerBubbles.forEach(bubble => {
+                bubblesContainer.appendChild(bubble);
+            });
+        }
         
         // Add click handler for video title
-        const titleElement = container.querySelector('.clickable-title') as HTMLElement;
         if (titleElement) {
             titleElement.addEventListener('click', () => {
                 this.showYouTubePlayer(video.links.youtube, video.title);
@@ -377,6 +420,81 @@ class ProducerTracker {
         }
         
         return container;
+    }
+
+    createStinkLines(): HTMLElement {
+        const template = document.getElementById('stink-lines-template') as HTMLTemplateElement;
+        if (!template) {
+            throw new Error('Stink lines template not found');
+        }
+
+        const clone = template.content.cloneNode(true) as DocumentFragment;
+        const stinkLines = clone.querySelector('.stink-lines') as HTMLElement;
+        
+        if (!stinkLines) {
+            throw new Error('Stink lines element not found in template');
+        }
+
+        return stinkLines;
+    }
+
+    createBestValueIndicator(viewsPerDollar: number): HTMLElement {
+        const template = document.getElementById('best-value-indicator-template') as HTMLTemplateElement;
+        if (!template) {
+            throw new Error('Best value indicator template not found');
+        }
+
+        const clone = template.content.cloneNode(true) as DocumentFragment;
+        const indicator = clone.querySelector('.value-indicator-container') as HTMLElement;
+        
+        if (!indicator) {
+            throw new Error('Value indicator element not found in template');
+        }
+
+        // Set the tooltip with the views per dollar ratio
+        indicator.title = `Best value: ${formatNumber(viewsPerDollar)} views per dollar`;
+
+        return indicator;
+    }
+
+    createProducerBubbles(video: Video): HTMLElement[] {
+        const template = document.getElementById('producer-bubble-template') as HTMLTemplateElement;
+        if (!template) {
+            throw new Error('Producer bubble template not found');
+        }
+
+        const producers = getProducersFromContributions(video.contributions);
+        const totalViews = getLatestTotalViews(video);
+        const producerShare = totalViews / producers.length;
+
+        return producers.map(producerId => {
+            const producer = getProducerById(producerId);
+            if (!producer) return document.createElement('span');
+
+            const clone = template.content.cloneNode(true) as DocumentFragment;
+            const bubble = clone.querySelector('.producer-bubble') as HTMLElement;
+            
+            if (!bubble) return document.createElement('span');
+
+            // Set bubble properties
+            bubble.style.background = producer.color;
+            const contribution = video.contributions[producerId] || 0;
+            bubble.title = `${producer.fullName}: $${contribution} - ${formatNumber(producerShare)} views`;
+
+            // Set image
+            const imageName = producer.name.toLowerCase();
+            const img = bubble.querySelector('.profile-image') as HTMLImageElement;
+            if (img) {
+                img.src = `/assets/${imageName}.png`;
+                img.alt = producer.name;
+            }
+
+            // Set producer name
+            const nameElement = bubble.querySelector('.producer-name');
+            if (nameElement) nameElement.textContent = producer.name;
+
+            return bubble;
+        });
     }
 
     getPerformanceIndicators(video: Video): string {
@@ -398,12 +516,46 @@ class ProducerTracker {
         const isBestInstagram = this.isBestPerformer(video.id, 'instagram', instagramGrowth);
         const isBestOverall = this.isBestPerformer(video.id, 'overall', totalGrowth);
         
-        if (isBestYouTube) indicators.push(`<div class="performance-arrow-container" title="Best YouTube performer in last 24h (+${formatNumber(youtubeGrowth)} views)"><span class="performance-arrow youtube-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16L12 4M7 9L12 4L17 9"/><text x="12" y="22" text-anchor="middle" font-size="8" font-weight="100" letter-spacing="2" fill="currentColor">24</text></svg></span></div>`);
-        if (isBestTiktok) indicators.push(`<div class="performance-arrow-container" title="Best TikTok performer in last 24h (+${formatNumber(tiktokGrowth)} views)"><span class="performance-arrow tiktok-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16L12 4M7 9L12 4L17 9"/><text x="12" y="22" text-anchor="middle" font-size="8" font-weight="100" letter-spacing="2" fill="currentColor">24</text></svg></span></div>`);
-        if (isBestInstagram) indicators.push(`<div class="performance-arrow-container" title="Best Instagram performer in last 24h (+${formatNumber(instagramGrowth)} views)"><span class="performance-arrow instagram-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16L12 4M7 9L12 4L17 9"/><text x="12" y="22" text-anchor="middle" font-size="8" font-weight="100" letter-spacing="2" fill="currentColor">24</text></svg></span></div>`);
-        if (isBestOverall) indicators.push(`<div class="performance-arrow-container" title="Best overall performer in last 24h (+${formatNumber(totalGrowth)} views)"><span class="performance-arrow overall-arrow"><svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><path d="M12 16L12 4M7 9L12 4L17 9"/><text x="12" y="22" text-anchor="middle" font-size="8" font-weight="100" letter-spacing="2" fill="currentColor">24</text></svg></span></div>`);
+        if (isBestYouTube) {
+            const arrow = this.createPerformanceArrow('youtube-arrow', `Best YouTube performer in last 24h (+${formatNumber(youtubeGrowth)} views)`);
+            indicators.push(arrow.outerHTML);
+        }
+        if (isBestTiktok) {
+            const arrow = this.createPerformanceArrow('tiktok-arrow', `Best TikTok performer in last 24h (+${formatNumber(tiktokGrowth)} views)`);
+            indicators.push(arrow.outerHTML);
+        }
+        if (isBestInstagram) {
+            const arrow = this.createPerformanceArrow('instagram-arrow', `Best Instagram performer in last 24h (+${formatNumber(instagramGrowth)} views)`);
+            indicators.push(arrow.outerHTML);
+        }
+        if (isBestOverall) {
+            const arrow = this.createPerformanceArrow('overall-arrow', `Best overall performer in last 24h (+${formatNumber(totalGrowth)} views)`);
+            indicators.push(arrow.outerHTML);
+        }
         
         return indicators.join('');
+    }
+
+    createPerformanceArrow(arrowClass: string, title: string): HTMLElement {
+        const template = document.getElementById('performance-arrow-template') as HTMLTemplateElement;
+        if (!template) {
+            throw new Error('Performance arrow template not found');
+        }
+
+        const clone = template.content.cloneNode(true) as DocumentFragment;
+        const container = clone.querySelector('.performance-arrow-container') as HTMLElement;
+        
+        if (!container) {
+            throw new Error('Performance arrow container not found in template');
+        }
+
+        container.title = title;
+        const arrow = container.querySelector('.performance-arrow') as HTMLElement;
+        if (arrow) {
+            arrow.className = `performance-arrow ${arrowClass}`;
+        }
+
+        return container;
     }
 
     get24HourPreviousIndex(): number {
@@ -659,26 +811,28 @@ class ProducerTracker {
             existingPlayer.remove();
         }
 
-        // Create fixed player in bottom right
-        const player = document.createElement('div');
-        player.className = 'youtube-player-fixed';
-        player.innerHTML = `
-            <div class="youtube-player-header">
-                <h4>${videoTitle}</h4>
-                <button class="close-button">&times;</button>
-            </div>
-            <div class="youtube-player-content">
-                <iframe 
-                    width="340" 
-                    height="640" 
-                    src="${videoLink.replace('/shorts/', '/embed/')}?autoplay=1&rel=0" 
-                    frameborder="0" 
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowfullscreen
-                    loading="lazy">
-                </iframe>
-            </div>
-        `;
+        // Create fixed player using template
+        const template = document.getElementById('youtube-player-template') as HTMLTemplateElement;
+        if (!template) {
+            throw new Error('YouTube player template not found');
+        }
+
+        const clone = template.content.cloneNode(true) as DocumentFragment;
+        const player = clone.querySelector('.youtube-player-fixed') as HTMLElement;
+        
+        if (!player) {
+            throw new Error('YouTube player element not found in template');
+        }
+
+        // Set title
+        const titleElement = player.querySelector('h4');
+        if (titleElement) titleElement.textContent = videoTitle;
+
+        // Set iframe src
+        const iframe = player.querySelector('iframe') as HTMLIFrameElement;
+        if (iframe) {
+            iframe.src = videoLink.replace('/shorts/', '/embed/') + '?autoplay=1&rel=0';
+        }
         
         document.body.appendChild(player);
         

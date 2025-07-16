@@ -148,8 +148,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 0;
-    margin-bottom: 12px;
+    padding-bottom: 8px;
     border-bottom: 2px solid #333333;
 }
 
@@ -219,6 +218,11 @@ body {
     stroke: currentColor;
     stroke-width: 2;
     fill: none;
+}
+
+.performance-arrow svg path,
+.performance-arrow svg text {
+    fill: currentColor;
 }
 
 .youtube-arrow {
@@ -692,15 +696,23 @@ body {
 }
 
 .producer-bubble {
-    padding: 4px 12px;
+    padding: 4px 8px;
     border-radius: 15px;
-    font-size: 0.75rem;
+    font-size: 0.65rem;
     font-weight: 600;
     color: #1a1a1a;
     border: 2px solid rgba(255, 255, 255, 0.2);
     display: flex;
     align-items: center;
     gap: 6px;
+
+    .producer-name {
+        margin-bottom: 0;
+    }
+}
+
+.producer-bubble .producer-name {
+    line-height: 1;
 }
 
 .producer-icon {
