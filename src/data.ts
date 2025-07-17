@@ -64,32 +64,32 @@ export interface VideoMetadataCollection {
     };
 }
 
-export const producers: Producer[] = [
-    {
+export const producers: { [id: string]: Producer } = {
+    "trapp": {
         id: "trapp",
         name: "Trapp",
         fullName: "Mike Trapp",
         color: "#10b981" // Emerald
     },
-    {
+    "rekha": {
         id: "rekha", 
         name: "Rekha",
         fullName: "Rekha Shankar",
         color: "#06b6d4" // Cyan
     },
-    {
-        id: "jordan",
-        name: "Jordan", 
+    "jordan": {
+        id: "jordan", 
+        name: "Jordan",
         fullName: "Jordan Myrick",
         color: "#6366f1" // Indigo
     },
-    {
+    "sam": {
         id: "sam",
         name: "Sam",
         fullName: "Sam Reich",
         color: "#8b5cf6" // Purple
     }
-];
+};
 
 // Combined view data structure
 export const viewData: ViewData = {
@@ -312,26 +312,6 @@ export const videoData: Video[] = Object.keys(videoMetadata).map(id => {
     };
 });
 
-// Helper function to get producer by ID
-export function getProducerById(id: string): Producer | undefined {
-    return producers.find(producer => producer.id === id);
-}
-
-// Helper function to get producers from contributions
-export function getProducersFromContributions(contributions: { [producerId: string]: number }): string[] {
-    return Object.keys(contributions);
-}
-
-// Helper function to get video metadata by ID
-export function getVideoMetadataById(id: string): { title: string; links: { youtube: string; tiktok: string; instagram: string }; contributions: { [producerId: string]: number } } | undefined {
-    return videoMetadata[id];
-}
-
-// Helper function to get video view data by ID
-export function getVideoViewDataById(id: string): VideoViewData | undefined {
-    return videoViewData.find(video => video.id === id);
-}
-
 // Helper function to calculate producer views for a specific date and platform
 export function getProducerViewsForDate(producerId: string, date: Date, platform: 'youtube' | 'tiktok' | 'instagram' | 'all' = 'all'): number {
     const dateIndex = viewData.times.indexOf(date);
@@ -340,7 +320,7 @@ export function getProducerViewsForDate(producerId: string, date: Date, platform
     let totalViews = 0;
     
     videoData.forEach(video => {
-        const producers = getProducersFromContributions(video.contributions);
+        const producers = Object.keys(video.contributions);
         if (producers.includes(producerId)) {
             const sharePercentage = 1 / producers.length; // Split equally between producers
             
@@ -388,7 +368,7 @@ export function updateVideoViewData(videoId: string, newViewData: Partial<VideoV
     if (index !== -1) {
         videoViewData[index] = { ...videoViewData[index], ...newViewData };
         // Update the combined videoData for backward compatibility
-        const metadata = getVideoMetadataById(videoId);
+        const metadata = videoMetadata[videoId];
         if (metadata) {
             const combinedIndex = videoData.findIndex(v => v.id === videoId);
             if (combinedIndex !== -1) {

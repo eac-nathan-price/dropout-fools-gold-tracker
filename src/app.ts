@@ -5,11 +5,9 @@ import {
     producers,
     videoData,
     sampleTimes,
-    getProducerById,
     getProducerViewsForDate,
     formatNumber,
     getLatestTotalViews,
-    getProducersFromContributions,
     Video
 } from './data';
 
@@ -68,7 +66,7 @@ class ProducerTracker {
         }
         
         // Create datasets for each producer with actual timestamps
-        const datasets = producers.map(producer => {
+        const datasets = Object.values(producers).map(producer => {
             const data = sampleTimes.map(time => ({
                 x: time,
                 y: getProducerViewsForDate(producer.id, time, this.currentPlatform as 'all' | 'youtube' | 'tiktok' | 'instagram')
@@ -124,7 +122,7 @@ class ProducerTracker {
                                 return `${dateString}, ${timeString}`;
                             },
                             label: function(context: any) {
-                                const producer = producers.find(p => p.name === context.dataset.label);
+                                const producer = Object.values(producers).find(p => p.name === context.dataset.label);
                                 return `${producer ? producer.name : 'Unknown'}: ${formatNumber(context.parsed.y)} views`;
                             }
                         }
@@ -177,7 +175,7 @@ class ProducerTracker {
         container.innerHTML = '';
         
         // Get producer stats and determine winner/loser
-        const producerStats = producers.map(producer => ({
+        const producerStats = Object.values(producers).map(producer => ({
             ...producer,
             stats: this.getProducerStats(producer.id)
         }));
@@ -273,7 +271,7 @@ class ProducerTracker {
         let soloVideoCount = 0;
         
         videoData.forEach(video => {
-            const producers = getProducersFromContributions(video.contributions);
+            const producers = Object.keys(video.contributions);
             if (producers.includes(producerId)) {
                 videoCount++;
                 if (producers.length === 1) {
@@ -465,7 +463,7 @@ class ProducerTracker {
         const videoShares: { title: string; views: number }[] = [];
         
         videoData.forEach(video => {
-            const producers = getProducersFromContributions(video.contributions);
+            const producers = Object.keys(video.contributions);
             if (producers.includes(producerId)) {
                 const sharePercentage = 1 / producers.length;
                 const latestIndex = sampleTimes.length - 1;
@@ -500,12 +498,12 @@ class ProducerTracker {
             throw new Error('Producer bubble template not found');
         }
 
-        const producers = getProducersFromContributions(video.contributions);
+        const producersIds = Object.keys(video.contributions);
         const totalViews = getLatestTotalViews(video);
-        const producerShare = totalViews / producers.length;
+        const producerShare = totalViews / producersIds.length;
 
-        return producers.map(producerId => {
-            const producer = getProducerById(producerId);
+        return producersIds.map((producerId) => {
+            const producer = producers[producerId];
             if (!producer) return document.createElement('span');
 
             const clone = template.content.cloneNode(true) as DocumentFragment;
