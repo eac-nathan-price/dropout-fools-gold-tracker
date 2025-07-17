@@ -1,3 +1,6 @@
+export const PLATFORMS = ['youtube', 'tiktok', 'instagram'] as const;
+export const EXTENDED_PLATFORMS = ['all', ...PLATFORMS] as const;
+
 // Producer data structure
 export const producers: { [id: string]: Producer } = {
     "trapp": {
@@ -25,10 +28,6 @@ export const producers: { [id: string]: Producer } = {
         color: "#8b5cf6" // Purple
     }
 };
-
-// Platform configuration for consistent styling
-export const PLATFORMS = ['youtube', 'tiktok', 'instagram'] as const;
-export type PlatformKey = typeof PLATFORMS[number];
 
 // Combined view data structure
 export const viewData: ViewData = {
@@ -217,35 +216,126 @@ export const videoMetadata: VideoMetadataCollection = {
     }
 };
 
+// Platform configuration
+export const PLATFORM_CONFIG: Record<ExtendedPlatform, PlatformConfig> = {
+    youtube: {
+        label: 'YouTube',
+        borderColor: '#ff0000',
+        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+        pointBackgroundColor: '#ff0000'
+    },
+    tiktok: {
+        label: 'TikTok',
+        borderColor: '#ffffff',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        pointBackgroundColor: '#ffffff'
+    },
+    instagram: {
+        label: 'Instagram',
+        borderColor: '#ff69b4',
+        backgroundColor: 'rgba(255, 105, 180, 0.2)',
+        pointBackgroundColor: '#ff69b4'
+    },
+    all: {
+        label: 'Total',
+        borderColor: '#ffd700',
+        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+        pointBackgroundColor: '#ffd700',
+        borderWidth: 3,
+        fill: false,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBorderWidth: 2
+    }
+};
+
+// Chart.js configuration defaults
+export const CHART_DEFAULTS = {
+    base: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'nearest' as const,
+            axis: 'x' as const,
+            intersect: false
+        }
+    },
+    scales: {
+        x: {
+            type: 'timeseries' as const,
+            time: {
+                unit: 'day' as const,
+                displayFormats: {
+                    day: 'MMM d'
+                }
+            },
+            grid: {
+                color: '#333333'
+            },
+            ticks: {
+                color: '#cccccc',
+                font: {
+                    size: 12
+                }
+            }
+        },
+        y: {
+            grid: {
+                color: '#333333'
+            },
+            ticks: {
+                color: '#cccccc',
+                callback: function(value: any) {
+                    return formatNumber(typeof value === 'number' ? value : Number(value));
+                }
+            }
+        }
+    },
+    tooltip: {
+        mode: 'index' as const,
+        intersect: false,
+        backgroundColor: '#2d2d2d',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        borderColor: '#ffd700',
+        borderWidth: 1,
+        callbacks: {
+            title: function(context: any) {
+                const date = new Date(context[0].parsed.x);
+                const timeString = date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+                const dateString = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+                return `${dateString}, ${timeString}`;
+            }
+        }
+    },
+    dataset: {
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointBorderColor: '#1a1a1a',
+        pointBorderWidth: 1,
+        pointRadius: 3,
+        pointHoverRadius: 5
+    }
+};
+
+export const PRODUCER_CARD_VIEWS_TEMPLATE: ExtendedPlatformData<string> = { all: '# Views', youtube: 'YT: #', tiktok: 'TT: #', instagram: 'IR: #' };
+export function populateProducerCardViews(element: Element | null, platform: ExtendedPlatform, views: number): void {
+    if (element) element.textContent = PRODUCER_CARD_VIEWS_TEMPLATE[platform].replace('#', formatNumber(views));
+}
+
 export const videoViewData: VideoViewData[] = Object.keys(videoMetadata).map(id => {
     const viewInfo = viewData.videos[id];
-    if (!viewInfo) {
-        throw new Error(`No view data found for video ${id}`);
-    }
-    return {
-        id: id,
-        youtube: viewInfo.youtube,
-        tiktok: viewInfo.tiktok,
-        instagram: viewInfo.instagram
-    };
+    if (!viewInfo) throw new Error(`No view data found for video ${id}`);
+    return { id: id, ...viewInfo };
 });
 
 // Combined video data for backward compatibility
 export const videoData: Video[] = Object.keys(videoMetadata).map(id => {
     const metadata = videoMetadata[id];
     const viewInfo = viewData.videos[id];
-    if (!viewInfo) {
-        throw new Error(`No view data found for video ${id}`);
-    }
-    return {
-        id: id,
-        title: metadata.title,
-        links: metadata.links,
-        contributions: metadata.contributions,
-        youtube: viewInfo.youtube,
-        tiktok: viewInfo.tiktok,
-        instagram: viewInfo.instagram
-    };
+    if (!viewInfo) throw new Error(`No view data found for video ${id}`);
+    return { id: id, ...metadata, ...viewInfo };
 });
 
 // Helper function to get platform views for a video at a specific index
@@ -268,9 +358,7 @@ export function getLatestPlatformViews(video: Video): ExtendedPlatformData<numbe
 export function getProducerViewsForDate(producerId: string, date: Date, platform: ExtendedPlatform = 'all'): number {
     const dateIndex = viewData.times.indexOf(date);
     if (dateIndex === -1) return 0;
-    
     let totalViews = 0;
-    
     videoData.forEach(video => {
         const producers = Object.keys(video.contributions);
         if (producers.includes(producerId)) {
@@ -279,23 +367,20 @@ export function getProducerViewsForDate(producerId: string, date: Date, platform
             totalViews += platformViews[platform] * sharePercentage;
         }
     });
-    
     return Math.round(totalViews);
 }
 
 // Helper function to format numbers with K, M, B suffixes
 export function formatNumber(num: number): string {
-    if (num >= 1000000000) {
-        return (num / 1000000000).toFixed(1) + 'B';
-    } else if (num >= 1000000) {
-        return (num / 1000000).toFixed(1) + 'M';
-    } else if (num >= 1000) {
-        return (num / 1000).toFixed(1) + 'K';
-    }
+    if (num >= 1000000000) return (num / 1000000000).toFixed(1) + 'B';
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
     return num.toString();
 }
 
-// Helper function to get latest total views for a video
-export function getLatestTotalViews(video: Video): number {
-    return getLatestPlatformViews(video).all;
+// Helper function to create an object from keys and a mapping function
+export function objectFromEntries<K extends string, T>(keys: K[], mapFn: (key: K) => T): Record<K, T> {
+    return Object.fromEntries(
+        keys.map(key => [key, mapFn(key)])
+    ) as Record<K, T>;
 }
