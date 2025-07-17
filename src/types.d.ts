@@ -62,3 +62,4 @@ interface VideoMetadataCollection {
 }
 
 type Platform = 'all' | 'youtube' | 'tiktok' | 'instagram';
+type Datelike = Date | string | number;

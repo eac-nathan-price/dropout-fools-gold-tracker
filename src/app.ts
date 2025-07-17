@@ -1,5 +1,6 @@
 // Main application logic for Producer Performance Tracker
 import Chart from 'chart.js/auto';
+import type { Chart as ChartType, ChartConfiguration } from 'chart.js';
 import 'chartjs-adapter-date-fns';
 import {
     producers,
@@ -10,581 +11,198 @@ import {
     viewData
 } from './data.js';
 
-class ProducerTracker {
-    currentPlatform: Platform;
-    producerChart: Chart<'line', { x: number | string | Date; y: number; }[], unknown> | null;
-    videoCharts: Map<string, Chart<'line', { x: number | string | Date; y: number; }[], unknown>>;
-
-    constructor() {
-        this.currentPlatform = 'all';
-        this.producerChart = null;
-        this.videoCharts = new Map();
-        
-        this.init();
-    }
-
-    init() {
-        this.setupEventListeners();
-        this.updateLastUpdated();
-        this.renderProducerComparisonChart();
-        this.renderVideoCharts();
-        this.renderProducerStats();
-    }
-
-    setupEventListeners() {
-        // Platform filter for producer comparison
-        const platformFilter = document.getElementById('platform-filter') as HTMLSelectElement | null;
-        if (platformFilter) {
-            platformFilter.addEventListener('change', (e: Event) => {
-                const target = e.target as HTMLSelectElement;
-                this.currentPlatform = target.value as Platform;
-                this.renderProducerComparisonChart();
-                this.renderProducerStats();
-            });
+// Chart.js configuration defaults
+const CHART_DEFAULTS = {
+    base: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+            mode: 'nearest' as const,
+            axis: 'x' as const,
+            intersect: false
         }
-
-        // Producer legend click handlers
-        document.querySelectorAll('.legend-item').forEach(item => {
-            item.addEventListener('click', (e: Event) => {
-                const currentTarget = e.currentTarget as HTMLElement | null;
-                if (currentTarget && currentTarget.dataset.producer) {
-                    const producerId = currentTarget.dataset.producer;
-                    this.toggleProducerVisibility(producerId);
+    },
+    scales: {
+        x: {
+            type: 'timeseries' as const,
+            time: {
+                unit: 'day' as const,
+                displayFormats: {
+                    day: 'MMM d'
                 }
-            });
-        });
-    }
-
-    renderProducerComparisonChart() {
-        const ctx = document.getElementById('producer-comparison-chart') as HTMLCanvasElement | null;
-        if (!ctx) return;
-
-        // Destroy existing chart if it exists
-        if (this.producerChart) {
-            this.producerChart.destroy();
-        }
-        
-        // Create datasets for each producer with actual timestamps
-        const datasets = Object.values(producers).map(producer => {
-            const data = viewData.times.map(time => ({
-                x: time,
-                y: getProducerViewsForDate(producer.id, time, this.currentPlatform)
-            }));
-            
-            return {
-                label: producer.name,
-                data: data,
-                borderColor: producer.color,
-                backgroundColor: producer.color + '20', // 20% opacity
-                borderWidth: 3,
-                fill: false,
-                tension: 0.4,
-                pointBackgroundColor: producer.color,
-                pointBorderColor: '#1a1a1a',
-                pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 8
-            };
-        });
-
-        this.producerChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                datasets: datasets as any // Chart.js expects a certain structure
             },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false // We have our custom legend
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: '#2d2d2d',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        borderColor: '#ffd700',
-                        borderWidth: 1,
-                        callbacks: {
-                            title: function(context: any) {
-                                const date = new Date(context[0].parsed.x);
-                                const timeString = date.toLocaleTimeString('en-US', { 
-                                    hour: 'numeric', 
-                                    hour12: true 
-                                });
-                                const dateString = date.toLocaleDateString('en-US', { 
-                                    month: 'long', 
-                                    day: 'numeric' 
-                                });
-                                return `${dateString}, ${timeString}`;
-                            },
-                            label: function(context: any) {
-                                const producer = Object.values(producers).find(p => p.name === context.dataset.label);
-                                return `${producer ? producer.name : 'Unknown'}: ${formatNumber(context.parsed.y)} views`;
-                            }
-                        }
-                    }
-                },
-                scales: {
-                    x: {
-                        type: 'time',
-                        time: {
-                            unit: 'day',
-                            displayFormats: {
-                                day: 'MMM d'
-                            }
-                        },
-                        grid: {
-                            color: '#333333'
-                        },
-                        ticks: {
-                            color: '#cccccc',
-                            font: {
-                                size: 12
-                            }
-                        }
-                    },
-                    y: {
-                        grid: {
-                            color: '#333333'
-                        },
-                        ticks: {
-                            color: '#cccccc',
-                            callback: function(value: any) {
-                                return formatNumber(typeof value === 'number' ? value : Number(value));
-                            }
-                        }
-                    }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
+            grid: {
+                color: '#333333'
+            },
+            ticks: {
+                color: '#cccccc',
+                font: {
+                    size: 12
                 }
             }
-        });
+        },
+        y: {
+            grid: {
+                color: '#333333'
+            },
+            ticks: {
+                color: '#cccccc',
+                callback: function(value: any) {
+                    return formatNumber(typeof value === 'number' ? value : Number(value));
+                }
+            }
+        }
+    },
+    tooltip: {
+        mode: 'index' as const,
+        intersect: false,
+        backgroundColor: '#2d2d2d',
+        titleColor: '#ffffff',
+        bodyColor: '#ffffff',
+        borderColor: '#ffd700',
+        borderWidth: 1,
+        callbacks: {
+            title: function(context: any) {
+                const date = new Date(context[0].parsed.x);
+                const timeString = date.toLocaleTimeString('en-US', { 
+                    hour: 'numeric', 
+                    hour12: true 
+                });
+                const dateString = date.toLocaleDateString('en-US', { 
+                    month: 'long', 
+                    day: 'numeric'
+                });
+                return `${dateString}, ${timeString}`;
+            }
+        }
+    },
+    dataset: {
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4,
+        pointBorderColor: '#1a1a1a',
+        pointBorderWidth: 1,
+        pointRadius: 3,
+        pointHoverRadius: 5
     }
+};
 
-    renderProducerStats() {
-        const container = document.querySelector('.producer-legend');
-        if (!container) return;
-
-        container.innerHTML = '';
-        
-        // Get producer stats and determine winner/loser
-        const producerStats = Object.values(producers).map(producer => ({
-            ...producer,
-            stats: this.getProducerStats(producer.id)
-        }));
-        
-        // Sort by total views to determine winner and loser
-        producerStats.sort((a, b) => b.stats.total - a.stats.total);
-        const winner = producerStats[0];
-        const loser = producerStats[producerStats.length - 1];
-        
-        producerStats.forEach(producer => {
-            const producerCard = this.createProducerCard(producer, winner, loser);
-            container.appendChild(producerCard);
-        });
+// Platform configuration
+const PLATFORM_CONFIG = {
+    youtube: {
+        label: 'YouTube',
+        borderColor: '#ff0000',
+        backgroundColor: 'rgba(255, 0, 0, 0.2)',
+        pointBackgroundColor: '#ff0000'
+    },
+    tiktok: {
+        label: 'TikTok',
+        borderColor: '#ffffff',
+        backgroundColor: 'rgba(255, 255, 255, 0.2)',
+        pointBackgroundColor: '#ffffff'
+    },
+    instagram: {
+        label: 'Instagram',
+        borderColor: '#ff69b4',
+        backgroundColor: 'rgba(255, 105, 180, 0.2)',
+        pointBackgroundColor: '#ff69b4'
+    },
+    total: {
+        label: 'Total',
+        borderColor: '#ffd700',
+        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+        pointBackgroundColor: '#ffd700',
+        borderWidth: 3,
+        fill: false,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBorderWidth: 2
     }
+};
 
-    createProducerCard(producer: any, winner: any, loser: any): HTMLElement {
-        const template = document.getElementById('producer-card-template') as HTMLTemplateElement;
+// Template utility class
+class TemplateManager {
+    static getTemplate(templateId: string): HTMLTemplateElement {
+        const template = document.getElementById(templateId) as HTMLTemplateElement;
         if (!template) {
-            throw new Error('Producer card template not found');
+            throw new Error(`Template '${templateId}' not found`);
         }
-
-        const clone = template.content.cloneNode(true) as DocumentFragment;
-        const card = clone.querySelector('.legend-item') as HTMLElement;
-        
-        if (!card) {
-            throw new Error('Producer card element not found in template');
-        }
-
-        // Set basic properties
-        card.dataset.producer = producer.id;
-        card.style.background = producer.color;
-
-        // Create tooltip with view sources
-        const tooltipText = this.createProducerTooltip(producer.id);
-        card.title = tooltipText;
-
-        // Add crown for winner
-        if (producer.id === winner.id) {
-            const crown = document.createElement('div');
-            crown.className = 'crown';
-            crown.textContent = '👑';
-            card.querySelector('.producer-profile')?.appendChild(crown);
-        }
-
-        // Add stink lines for loser
-        if (producer.id === loser.id) {
-            const stinkLines = this.createStinkLines();
-            card.querySelector('.producer-profile')?.appendChild(stinkLines);
-        }
-
-        // Set image and fallback
-        const imageName = producer.name.toLowerCase();
-        const img = card.querySelector('.profile-image') as HTMLImageElement;
-        if (img) {
-            img.src = `/assets/${imageName}.png`;
-            img.alt = producer.fullName;
-        }
-
-        // Set text content
-        const nameElement = card.querySelector('.producer-name');
-        if (nameElement) nameElement.textContent = producer.fullName;
-
-        const totalElement = card.querySelector('.producer-total');
-        if (totalElement) totalElement.textContent = `${formatNumber(producer.stats.total)} Views`;
-
-        const youtubeCount = card.querySelector('.youtube-count');
-        if (youtubeCount) youtubeCount.textContent = `YT: ${formatNumber(producer.stats.youtube)}`;
-
-        const tiktokCount = card.querySelector('.tiktok-count');
-        if (tiktokCount) tiktokCount.textContent = `TT: ${formatNumber(producer.stats.tiktok)}`;
-
-        const instagramCount = card.querySelector('.instagram-count') as HTMLElement;
-        if (instagramCount) instagramCount.textContent = `IR: ${formatNumber(producer.stats.instagram)}`;
-
-        const videoCount = card.querySelector('.producer-video-count');
-        const shortsText = producer.stats.videoCount === 1 ? 'Short' : 'Shorts';
-        if (videoCount) videoCount.textContent = `${producer.stats.videoCount} ${shortsText}`;
-
-        const soloCount = card.querySelector('.producer-solo-count');
-        if (soloCount) soloCount.textContent = `${producer.stats.soloVideoCount} Solo`;
-
-        return card;
+        return template;
     }
 
-    getProducerStats(producerId: string) {
-        let youtubeTotal = 0;
-        let tiktokTotal = 0;
-        let instagramTotal = 0;
-        let videoCount = 0;
-        let soloVideoCount = 0;
-        
-        videoData.forEach(video => {
-            const producers = Object.keys(video.contributions);
-            if (producers.includes(producerId)) {
-                videoCount++;
-                if (producers.length === 1) {
-                    soloVideoCount++;
-                }
-                const sharePercentage = 1 / producers.length;
-                
-                // Always calculate all platform totals for display in cards
-                const latestIndex = viewData.times.length - 1;
-                youtubeTotal += video.youtubeViews[latestIndex] * sharePercentage;
-                tiktokTotal += video.tiktokViews[latestIndex] * sharePercentage;
-                instagramTotal += video.instagramViews[latestIndex] * sharePercentage;
-            }
-        });
-        
+    static cloneTemplate(templateId: string): DocumentFragment {
+        const template = this.getTemplate(templateId);
+        return template.content.cloneNode(true) as DocumentFragment;
+    }
+
+    static getElementFromTemplate<T extends HTMLElement>(templateId: string, selector: string): T {
+        const clone = this.cloneTemplate(templateId);
+        const element = clone.querySelector(selector) as T;
+        if (!element) {
+            throw new Error(`Element '${selector}' not found in template '${templateId}'`);
+        }
+        return element;
+    }
+}
+
+// Chart utility class
+class ChartManager {
+    static createChart(ctx: HTMLCanvasElement, config: ChartConfiguration<'line', { x: Datelike; y: number; }[], unknown>): ChartType<'line', { x: Datelike; y: number; }[], unknown> {
+        return new Chart(ctx, config);
+    }
+
+    static destroyChart(chart: ChartType<'line', { x: Datelike; y: number; }[], unknown> | null): void {
+        if (chart) {
+            chart.destroy();
+        }
+    }
+
+    static createDataset(data: any[], config: any): any {
         return {
-            total: Math.round(youtubeTotal + tiktokTotal + instagramTotal),
-            youtube: Math.round(youtubeTotal),
-            tiktok: Math.round(tiktokTotal),
-            instagram: Math.round(instagramTotal),
-            videoCount: videoCount,
-            soloVideoCount: soloVideoCount
+            ...CHART_DEFAULTS.dataset,
+            ...config,
+            data: data
         };
     }
 
-    toggleProducerVisibility(producerId: string) {
-        const legendItem = document.querySelector(`[data-producer="${producerId}"]`) as HTMLElement | null;
-        if (!legendItem) return;
-        
-        const isHidden = legendItem.classList.contains('hidden');
-        
-        if (isHidden) {
-            legendItem.classList.remove('hidden');
-            // Chart.js doesn't have show/hide methods, we need to update the chart data
-            this.renderProducerComparisonChart();
-        } else {
-            legendItem.classList.add('hidden');
-            // Chart.js doesn't have show/hide methods, we need to update the chart data
-            this.renderProducerComparisonChart();
-        }
+    static createTimeData(times: Date[], values: number[]): any[] {
+        return times.map((time, index) => ({
+            x: time,
+            y: values[index]
+        }));
     }
 
-    renderVideoCharts() {
-        const container = document.getElementById('video-charts-grid');
-        if (!container) return;
-        container.innerHTML = '';
-        
-        videoData.forEach(video => {
-            const chartContainer = this.createVideoChartContainer(video);
-            container.appendChild(chartContainer);
-        });
-
-        // Render charts after DOM elements are created
-        setTimeout(() => {
-            videoData.forEach(video => {
-                this.renderVideoChart(video);
-            });
-        }, 100);
-    }
-
-    createVideoChartContainer(video: Video): HTMLElement {
-        const template = document.getElementById('video-chart-container-template') as HTMLTemplateElement;
-        if (!template) {
-            throw new Error('Video chart container template not found');
+    static getChartOptions(showLegend: boolean = true, customTooltipLabel?: (context: any) => string) {
+        const tooltipCallbacks: any = { ...CHART_DEFAULTS.tooltip.callbacks };
+        if (customTooltipLabel) {
+            tooltipCallbacks.label = customTooltipLabel;
         }
 
-        const clone = template.content.cloneNode(true) as DocumentFragment;
-        const container = clone.querySelector('.chart-container') as HTMLElement;
-        
-        if (!container) {
-            throw new Error('Chart container element not found in template');
-        }
-
-        // Set container ID
-        container.id = `container-${video.id}`;
-
-        // Set title and link
-        const titleElement = container.querySelector('.clickable-title') as HTMLElement;
-        if (titleElement) {
-            titleElement.textContent = video.title;
-            titleElement.dataset.videoLink = video.links.youtube;
-        }
-
-        // Set total views
-        const totalViewsElement = container.querySelector('.total-views-display');
-        if (totalViewsElement) {
-            totalViewsElement.textContent = formatNumber(getLatestTotalViews(video));
-        }
-
-        // Set platform links
-        const youtubeLink = container.querySelector('.youtube-icon') as HTMLAnchorElement;
-        if (youtubeLink) youtubeLink.href = video.links.youtube;
-
-        const tiktokLink = container.querySelector('.tiktok-icon') as HTMLAnchorElement;
-        if (tiktokLink) tiktokLink.href = video.links.tiktok;
-
-        const instagramLink = container.querySelector('.instagram-icon') as HTMLAnchorElement;
-        if (instagramLink) instagramLink.href = video.links.instagram;
-
-        // Set total contribution
-        const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0).toLocaleString();
-        const contributionElement = container.querySelector('.total-contribution');
-        if (contributionElement) {
-            contributionElement.textContent = `$${totalContribution}`;
-        }
-
-        // Add performance indicators
-        const performanceIndicators = this.getPerformanceIndicators(video);
-        const indicatorsContainer = container.querySelector('.performance-indicators');
-        if (indicatorsContainer) {
-            indicatorsContainer.innerHTML = performanceIndicators;
-        }
-
-                 // Add value indicator if best value
-         const isBestValue = this.isBestValuePerDollar(video);
-         if (isBestValue && indicatorsContainer) {
-             const totalViews = getLatestTotalViews(video);
-             const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0);
-             const viewsPerDollar = Math.round(totalViews / totalContribution);
-             const valueIndicator = this.createBestValueIndicator(viewsPerDollar);
-             indicatorsContainer.appendChild(valueIndicator);
-         }
-
-        // Set canvas ID
-        const canvas = container.querySelector('canvas') as HTMLCanvasElement;
-        if (canvas) {
-            canvas.id = `chart-${video.id}`;
-        }
-
-        // Add producer bubbles
-        const producerBubbles = this.createProducerBubbles(video);
-        const bubblesContainer = container.querySelector('.producer-bubbles');
-        if (bubblesContainer) {
-            bubblesContainer.innerHTML = '';
-            producerBubbles.forEach(bubble => {
-                bubblesContainer.appendChild(bubble);
-            });
-        }
-        
-        // Add click handler for video title
-        if (titleElement) {
-            titleElement.addEventListener('click', () => {
-                this.showYouTubePlayer(video.links.youtube, video.title);
-            });
-        }
-        
-        return container;
-    }
-
-    createStinkLines(): HTMLElement {
-        const template = document.getElementById('stink-lines-template') as HTMLTemplateElement;
-        if (!template) {
-            throw new Error('Stink lines template not found');
-        }
-
-        const clone = template.content.cloneNode(true) as DocumentFragment;
-        const stinkLines = clone.querySelector('.stink-lines') as HTMLElement;
-        
-        if (!stinkLines) {
-            throw new Error('Stink lines element not found in template');
-        }
-
-        return stinkLines;
-    }
-
-    createBestValueIndicator(viewsPerDollar: number): HTMLElement {
-        const template = document.getElementById('best-value-indicator-template') as HTMLTemplateElement;
-        if (!template) {
-            throw new Error('Best value indicator template not found');
-        }
-
-        const clone = template.content.cloneNode(true) as DocumentFragment;
-        const indicator = clone.querySelector('.value-indicator-container') as HTMLElement;
-        
-        if (!indicator) {
-            throw new Error('Value indicator element not found in template');
-        }
-
-        // Set the tooltip with the views per dollar ratio
-        indicator.title = `Best value: ${formatNumber(viewsPerDollar)} views per dollar`;
-
-        return indicator;
-    }
-
-    createProducerTooltip(producerId: string): string {
-        const videoShares: { title: string; views: number }[] = [];
-        
-        videoData.forEach(video => {
-            const producers = Object.keys(video.contributions);
-            if (producers.includes(producerId)) {
-                const sharePercentage = 1 / producers.length;
-                const latestIndex = viewData.times.length - 1;
-                
-                // Calculate total views for this video (all platforms combined)
-                const totalVideoViews = video.youtubeViews[latestIndex] + video.tiktokViews[latestIndex] + video.instagramViews[latestIndex];
-                
-                const producerShare = Math.round(totalVideoViews * sharePercentage);
-                if (producerShare > 0) {
-                    videoShares.push({ title: video.title, views: producerShare });
+        return {
+            ...CHART_DEFAULTS.base,
+            plugins: {
+                legend: {
+                    display: showLegend,
+                    position: 'top' as const,
+                    labels: {
+                        color: '#cccccc',
+                        usePointStyle: true,
+                        padding: 15
+                    }
+                },
+                tooltip: {
+                    ...CHART_DEFAULTS.tooltip,
+                    callbacks: tooltipCallbacks
                 }
-            }
-        });
-        
-        // Sort by views in decreasing order
-        videoShares.sort((a, b) => b.views - a.views);
-        
-        // Create tooltip text
-        let tooltipText = 'Most views:';
-        videoShares.forEach(video => {
-            tooltipText += `\n${video.title}: ${formatNumber(video.views)}`;
-        });
-        
-        return tooltipText;
+            },
+            scales: CHART_DEFAULTS.scales
+        };
     }
+}
 
-    createProducerBubbles(video: Video): HTMLElement[] {
-        const template = document.getElementById('producer-bubble-template') as HTMLTemplateElement;
-        if (!template) {
-            throw new Error('Producer bubble template not found');
-        }
-
-        const producersIds = Object.keys(video.contributions);
-        const totalViews = getLatestTotalViews(video);
-        const producerShare = totalViews / producersIds.length;
-
-        return producersIds.map((producerId) => {
-            const producer = producers[producerId];
-            if (!producer) return document.createElement('span');
-
-            const clone = template.content.cloneNode(true) as DocumentFragment;
-            const bubble = clone.querySelector('.producer-bubble') as HTMLElement;
-            
-            if (!bubble) return document.createElement('span');
-
-            // Set bubble properties
-            bubble.style.background = producer.color;
-            const contribution = video.contributions[producerId] || 0;
-            bubble.title = `${producer.fullName}: $${contribution} - ${formatNumber(producerShare)} views`;
-
-            // Set image
-            const imageName = producer.name.toLowerCase();
-            const img = bubble.querySelector('.profile-image') as HTMLImageElement;
-            if (img) {
-                img.src = `/assets/${imageName}.png`;
-                img.alt = producer.name;
-            }
-
-            // Set producer name
-            const nameElement = bubble.querySelector('.producer-name');
-            if (nameElement) nameElement.textContent = producer.name;
-
-            return bubble;
-        });
-    }
-
-    getPerformanceIndicators(video: Video): string {
-        const indicators: string[] = [];
-        
-        // Get the most recent data point and the one closest to 24 hours ago
-        const lastIndex = viewData.times.length - 1;
-        const prevDayIndex = this.get24HourPreviousIndex();
-        
-        // Calculate 24-hour growth for each platform
-        const youtubeGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
-        const tiktokGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
-        const instagramGrowth = video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex];
-        const totalGrowth = youtubeGrowth + tiktokGrowth + instagramGrowth;
-        
-        // Check if this video is the best performer in each category
-        const isBestYouTube = this.isBestPerformer(video.id, 'youtube', youtubeGrowth);
-        const isBestTiktok = this.isBestPerformer(video.id, 'tiktok', tiktokGrowth);
-        const isBestInstagram = this.isBestPerformer(video.id, 'instagram', instagramGrowth);
-        const isBestOverall = this.isBestPerformer(video.id, 'all', totalGrowth);
-        
-        if (isBestYouTube) {
-            const arrow = this.createPerformanceArrow('youtube-arrow', `Best YouTube performer in last 24h (+${formatNumber(youtubeGrowth)} views)`);
-            indicators.push(arrow.outerHTML);
-        }
-        if (isBestTiktok) {
-            const arrow = this.createPerformanceArrow('tiktok-arrow', `Best TikTok performer in last 24h (+${formatNumber(tiktokGrowth)} views)`);
-            indicators.push(arrow.outerHTML);
-        }
-        if (isBestInstagram) {
-            const arrow = this.createPerformanceArrow('instagram-arrow', `Best Instagram performer in last 24h (+${formatNumber(instagramGrowth)} views)`);
-            indicators.push(arrow.outerHTML);
-        }
-        if (isBestOverall) {
-            const arrow = this.createPerformanceArrow('overall-arrow', `Best overall performer in last 24h (+${formatNumber(totalGrowth)} views)`);
-            indicators.push(arrow.outerHTML);
-        }
-        
-        return indicators.join('');
-    }
-
-    createPerformanceArrow(arrowClass: string, title: string): HTMLElement {
-        const template = document.getElementById('performance-arrow-template') as HTMLTemplateElement;
-        if (!template) {
-            throw new Error('Performance arrow template not found');
-        }
-
-        const clone = template.content.cloneNode(true) as DocumentFragment;
-        const container = clone.querySelector('.performance-arrow-container') as HTMLElement;
-        
-        if (!container) {
-            throw new Error('Performance arrow container not found in template');
-        }
-
-        container.title = title;
-        const arrow = container.querySelector('.performance-arrow') as HTMLElement;
-        if (arrow) {
-            arrow.className = `performance-arrow ${arrowClass}`;
-        }
-
-        return container;
-    }
-
-    get24HourPreviousIndex(): number {
+// Performance analysis utility class
+class PerformanceAnalyzer {
+    static get24HourPreviousIndex(): number {
         const lastIndex = viewData.times.length - 1;
         const currentTime = viewData.times[lastIndex];
         const targetTime = new Date(currentTime.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
@@ -603,28 +221,29 @@ class ProducerTracker {
         return closestIndex;
     }
 
-    isBestPerformer(videoId: string, platform: Platform, growth: number): boolean {
+    static calculateGrowth(video: Video, platform: Platform): number {
         const lastIndex = viewData.times.length - 1;
         const prevDayIndex = this.get24HourPreviousIndex();
         
+        if (platform === 'youtube') {
+            return video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
+        } else if (platform === 'tiktok') {
+            return video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
+        } else if (platform === 'instagram') {
+            return video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex];
+        } else {
+            const youtubeGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
+            const tiktokGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
+            const instagramGrowth = video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex];
+            return youtubeGrowth + tiktokGrowth + instagramGrowth;
+        }
+    }
+
+    static isBestPerformer(videoId: string, platform: Platform, growth: number): boolean {
         let maxGrowth = -1;
         
         videoData.forEach(video => {
-            let videoGrowth = 0;
-            
-            if (platform === 'youtube') {
-                videoGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
-            } else if (platform === 'tiktok') {
-                videoGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
-            } else if (platform === 'instagram') {
-                videoGrowth = video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex];
-            } else if (platform === 'all') {
-                const youtubeGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
-                const tiktokGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
-                const instagramGrowth = video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex];
-                videoGrowth = youtubeGrowth + tiktokGrowth + instagramGrowth;
-            }
-            
+            const videoGrowth = this.calculateGrowth(video, platform);
             if (videoGrowth > maxGrowth) {
                 maxGrowth = videoGrowth;
             }
@@ -633,7 +252,7 @@ class ProducerTracker {
         return growth === maxGrowth && growth > 0;
     }
 
-    isBestValuePerDollar(video: Video): boolean {
+    static isBestValuePerDollar(video: Video): boolean {
         const totalViews = getLatestTotalViews(video);
         const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0);
         const viewsPerDollar = totalViews / totalContribution;
@@ -652,172 +271,464 @@ class ProducerTracker {
         
         return viewsPerDollar === maxViewsPerDollar && viewsPerDollar > 0;
     }
+}
+
+// UI component factory class
+class UIComponentFactory {
+    static createPerformanceArrow(arrowClass: string, title: string): HTMLElement {
+        const container = TemplateManager.getElementFromTemplate<HTMLElement>('performance-arrow-template', '.performance-arrow-container');
+        container.title = title;
+        const arrow = container.querySelector('.performance-arrow') as HTMLElement;
+        if (arrow) {
+            arrow.className = `performance-arrow ${arrowClass}`;
+        }
+        return container;
+    }
+
+    static createStinkLines(): HTMLElement {
+        return TemplateManager.getElementFromTemplate<HTMLElement>('stink-lines-template', '.stink-lines');
+    }
+
+    static createBestValueIndicator(viewsPerDollar: number): HTMLElement {
+        const indicator = TemplateManager.getElementFromTemplate<HTMLElement>('best-value-indicator-template', '.value-indicator-container');
+        indicator.title = `Best value: ${formatNumber(viewsPerDollar)} views per dollar`;
+        return indicator;
+    }
+
+    static createProducerBubble(producer: Producer, contribution: number, producerShare: number): HTMLElement {
+        const bubble = TemplateManager.getElementFromTemplate<HTMLElement>('producer-bubble-template', '.producer-bubble');
+        
+        bubble.style.background = producer.color;
+        bubble.title = `${producer.fullName}: $${contribution} - ${formatNumber(producerShare)} views`;
+
+        const imageName = producer.name.toLowerCase();
+        const img = bubble.querySelector('.profile-image') as HTMLImageElement;
+        if (img) {
+            img.src = `/assets/${imageName}.png`;
+            img.alt = producer.name;
+        }
+
+        const nameElement = bubble.querySelector('.producer-name');
+        if (nameElement) nameElement.textContent = producer.name;
+
+        return bubble;
+    }
+}
+
+// Producer stats calculator class
+class ProducerStatsCalculator {
+    static getProducerStats(producerId: string) {
+        let youtubeTotal = 0;
+        let tiktokTotal = 0;
+        let instagramTotal = 0;
+        let videoCount = 0;
+        let soloVideoCount = 0;
+        
+        videoData.forEach(video => {
+            const producers = Object.keys(video.contributions);
+            if (producers.includes(producerId)) {
+                videoCount++;
+                if (producers.length === 1) {
+                    soloVideoCount++;
+                }
+                const sharePercentage = 1 / producers.length;
+                
+                const latestIndex = viewData.times.length - 1;
+                youtubeTotal += video.youtubeViews[latestIndex] * sharePercentage;
+                tiktokTotal += video.tiktokViews[latestIndex] * sharePercentage;
+                instagramTotal += video.instagramViews[latestIndex] * sharePercentage;
+            }
+        });
+        
+        return {
+            total: Math.round(youtubeTotal + tiktokTotal + instagramTotal),
+            youtube: Math.round(youtubeTotal),
+            tiktok: Math.round(tiktokTotal),
+            instagram: Math.round(instagramTotal),
+            videoCount: videoCount,
+            soloVideoCount: soloVideoCount
+        };
+    }
+
+    static createProducerTooltip(producerId: string): string {
+        const videoShares: { title: string; views: number }[] = [];
+        
+        videoData.forEach(video => {
+            const producers = Object.keys(video.contributions);
+            if (producers.includes(producerId)) {
+                const sharePercentage = 1 / producers.length;
+                const latestIndex = viewData.times.length - 1;
+                
+                const totalVideoViews = video.youtubeViews[latestIndex] + video.tiktokViews[latestIndex] + video.instagramViews[latestIndex];
+                
+                const producerShare = Math.round(totalVideoViews * sharePercentage);
+                if (producerShare > 0) {
+                    videoShares.push({ title: video.title, views: producerShare });
+                }
+            }
+        });
+        
+        videoShares.sort((a, b) => b.views - a.views);
+        
+        let tooltipText = 'Most views:';
+        videoShares.forEach(video => {
+            tooltipText += `\n${video.title}: ${formatNumber(video.views)}`;
+        });
+        
+        return tooltipText;
+    }
+}
+
+// Main application class
+class ProducerTracker {
+    currentPlatform: Platform;
+    producerChart: ChartType<'line', { x: Datelike; y: number; }[], unknown> | null;
+    videoCharts: Map<string, ChartType<'line', { x: Datelike; y: number; }[], unknown>>;
+
+    constructor() {
+        this.currentPlatform = 'all';
+        this.producerChart = null;
+        this.videoCharts = new Map();
+        
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.updateLastUpdated();
+        this.renderProducerComparisonChart();
+        this.renderVideoCharts();
+        this.renderProducerStats();
+    }
+
+    setupEventListeners() {
+        const platformFilter = document.getElementById('platform-filter') as HTMLSelectElement | null;
+        if (platformFilter) {
+            platformFilter.addEventListener('change', (e: Event) => {
+                const target = e.target as HTMLSelectElement;
+                this.currentPlatform = target.value as Platform;
+                this.renderProducerComparisonChart();
+                this.renderProducerStats();
+            });
+        }
+
+        document.querySelectorAll('.legend-item').forEach(item => {
+            item.addEventListener('click', (e: Event) => {
+                const currentTarget = e.currentTarget as HTMLElement | null;
+                if (currentTarget && currentTarget.dataset.producer) {
+                    const producerId = currentTarget.dataset.producer;
+                    this.toggleProducerVisibility(producerId);
+                }
+            });
+        });
+    }
+
+    renderProducerComparisonChart() {
+        const ctx = document.getElementById('producer-comparison-chart') as HTMLCanvasElement | null;
+        if (!ctx) return;
+
+        ChartManager.destroyChart(this.producerChart);
+        
+        const datasets = Object.values(producers).map(producer => {
+            const data = ChartManager.createTimeData(
+                viewData.times,
+                viewData.times.map(time => getProducerViewsForDate(producer.id, time, this.currentPlatform))
+            );
+            
+            return ChartManager.createDataset(data, {
+                label: producer.name,
+                borderColor: producer.color,
+                backgroundColor: producer.color + '20',
+                fill: false,
+                borderWidth: 3,
+                pointBackgroundColor: producer.color,
+                pointBorderWidth: 2,
+                pointRadius: 5,
+                pointHoverRadius: 8
+            });
+        });
+
+        const customTooltipLabel = (context: any) => {
+            const producer = Object.values(producers).find(p => p.name === context.dataset.label);
+            return `${producer ? producer.name : 'Unknown'}: ${formatNumber(context.parsed.y)} views`;
+        };
+
+        this.producerChart = ChartManager.createChart(ctx, {
+            type: 'line',
+            data: { datasets },
+            options: ChartManager.getChartOptions(false, customTooltipLabel)
+        });
+    }
+
+    renderProducerStats() {
+        const container = document.querySelector('.producer-legend');
+        if (!container) return;
+
+        container.innerHTML = '';
+        
+        const producerStats = Object.values(producers).map(producer => ({
+            ...producer,
+            stats: ProducerStatsCalculator.getProducerStats(producer.id)
+        }));
+        
+        producerStats.sort((a, b) => b.stats.total - a.stats.total);
+        const winner = producerStats[0];
+        const loser = producerStats[producerStats.length - 1];
+        
+        producerStats.forEach(producer => {
+            const producerCard = this.createProducerCard(producer, winner, loser);
+            container.appendChild(producerCard);
+        });
+    }
+
+    createProducerCard(producer: any, winner: any, loser: any): HTMLElement {
+        const card = TemplateManager.getElementFromTemplate<HTMLElement>('producer-card-template', '.legend-item');
+        
+        card.dataset.producer = producer.id;
+        card.style.background = producer.color;
+        card.title = ProducerStatsCalculator.createProducerTooltip(producer.id);
+
+        if (producer.id === winner.id) {
+            const crown = document.createElement('div');
+            crown.className = 'crown';
+            crown.textContent = '👑';
+            card.querySelector('.producer-profile')?.appendChild(crown);
+        }
+
+        if (producer.id === loser.id) {
+            const stinkLines = UIComponentFactory.createStinkLines();
+            card.querySelector('.producer-profile')?.appendChild(stinkLines);
+        }
+
+        this.populateProducerCard(card, producer);
+        
+        return card;
+    }
+
+    private populateProducerCard(card: HTMLElement, producer: any): void {
+        const imageName = producer.name.toLowerCase();
+        const img = card.querySelector('.profile-image') as HTMLImageElement;
+        if (img) {
+            img.src = `/assets/${imageName}.png`;
+            img.alt = producer.fullName;
+        }
+
+        const elements = {
+            name: card.querySelector('.producer-name'),
+            total: card.querySelector('.producer-total'),
+            youtube: card.querySelector('.youtube-count'),
+            tiktok: card.querySelector('.tiktok-count'),
+            instagram: card.querySelector('.instagram-count') as HTMLElement,
+            videoCount: card.querySelector('.producer-video-count'),
+            soloCount: card.querySelector('.producer-solo-count')
+        };
+
+        if (elements.name) elements.name.textContent = producer.fullName;
+        if (elements.total) elements.total.textContent = `${formatNumber(producer.stats.total)} Views`;
+        if (elements.youtube) elements.youtube.textContent = `YT: ${formatNumber(producer.stats.youtube)}`;
+        if (elements.tiktok) elements.tiktok.textContent = `TT: ${formatNumber(producer.stats.tiktok)}`;
+        if (elements.instagram) elements.instagram.textContent = `IR: ${formatNumber(producer.stats.instagram)}`;
+        
+        const shortsText = producer.stats.videoCount === 1 ? 'Short' : 'Shorts';
+        if (elements.videoCount) elements.videoCount.textContent = `${producer.stats.videoCount} ${shortsText}`;
+        if (elements.soloCount) elements.soloCount.textContent = `${producer.stats.soloVideoCount} Solo`;
+    }
+
+    toggleProducerVisibility(producerId: string) {
+        const legendItem = document.querySelector(`[data-producer="${producerId}"]`) as HTMLElement | null;
+        if (!legendItem) return;
+        
+        const isHidden = legendItem.classList.contains('hidden');
+        legendItem.classList.toggle('hidden', !isHidden);
+        this.renderProducerComparisonChart();
+    }
+
+    renderVideoCharts() {
+        const container = document.getElementById('video-charts-grid');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        videoData.forEach(video => {
+            const chartContainer = this.createVideoChartContainer(video);
+            container.appendChild(chartContainer);
+        });
+
+        setTimeout(() => {
+            videoData.forEach(video => {
+                this.renderVideoChart(video);
+            });
+        }, 100);
+    }
+
+    createVideoChartContainer(video: Video): HTMLElement {
+        const container = TemplateManager.getElementFromTemplate<HTMLElement>('video-chart-container-template', '.chart-container');
+        
+        container.id = `container-${video.id}`;
+
+        this.populateVideoChartContainer(container, video);
+        
+        return container;
+    }
+
+    private populateVideoChartContainer(container: HTMLElement, video: Video): void {
+        const titleElement = container.querySelector('.clickable-title') as HTMLElement;
+        if (titleElement) {
+            titleElement.textContent = video.title;
+            titleElement.dataset.videoLink = video.links.youtube;
+            titleElement.addEventListener('click', () => {
+                this.showYouTubePlayer(video.links.youtube, video.title);
+            });
+        }
+
+        const totalViewsElement = container.querySelector('.total-views-display');
+        if (totalViewsElement) {
+            totalViewsElement.textContent = formatNumber(getLatestTotalViews(video));
+        }
+
+        this.setPlatformLinks(container, video);
+        this.setContributionInfo(container, video);
+        this.setPerformanceIndicators(container, video);
+        this.setCanvasId(container, video);
+        this.setProducerBubbles(container, video);
+    }
+
+    private setPlatformLinks(container: HTMLElement, video: Video): void {
+        const links = {
+            youtube: container.querySelector('.youtube-icon') as HTMLAnchorElement,
+            tiktok: container.querySelector('.tiktok-icon') as HTMLAnchorElement,
+            instagram: container.querySelector('.instagram-icon') as HTMLAnchorElement
+        };
+
+        if (links.youtube) links.youtube.href = video.links.youtube;
+        if (links.tiktok) links.tiktok.href = video.links.tiktok;
+        if (links.instagram) links.instagram.href = video.links.instagram;
+    }
+
+    private setContributionInfo(container: HTMLElement, video: Video): void {
+        const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0).toLocaleString();
+        const contributionElement = container.querySelector('.total-contribution');
+        if (contributionElement) {
+            contributionElement.textContent = `$${totalContribution}`;
+        }
+    }
+
+    private setPerformanceIndicators(container: HTMLElement, video: Video): void {
+        const indicatorsContainer = container.querySelector('.performance-indicators');
+        if (!indicatorsContainer) return;
+
+        const indicators = this.getPerformanceIndicators(video);
+        indicatorsContainer.innerHTML = indicators;
+
+        if (PerformanceAnalyzer.isBestValuePerDollar(video)) {
+            const totalViews = getLatestTotalViews(video);
+            const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0);
+            const viewsPerDollar = Math.round(totalViews / totalContribution);
+            const valueIndicator = UIComponentFactory.createBestValueIndicator(viewsPerDollar);
+            indicatorsContainer.appendChild(valueIndicator);
+        }
+    }
+
+    private setCanvasId(container: HTMLElement, video: Video): void {
+        const canvas = container.querySelector('canvas') as HTMLCanvasElement;
+        if (canvas) {
+            canvas.id = `chart-${video.id}`;
+        }
+    }
+
+    private setProducerBubbles(container: HTMLElement, video: Video): void {
+        const bubblesContainer = container.querySelector('.producer-bubbles');
+        if (!bubblesContainer) return;
+
+        bubblesContainer.innerHTML = '';
+        const producerBubbles = this.createProducerBubbles(video);
+        producerBubbles.forEach(bubble => {
+            bubblesContainer.appendChild(bubble);
+        });
+    }
+
+    getPerformanceIndicators(video: Video): string {
+        const indicators: string[] = [];
+        const platforms: { platform: Platform; arrowClass: string }[] = [
+            { platform: 'youtube', arrowClass: 'youtube-arrow' },
+            { platform: 'tiktok', arrowClass: 'tiktok-arrow' },
+            { platform: 'instagram', arrowClass: 'instagram-arrow' },
+            { platform: 'all', arrowClass: 'overall-arrow' }
+        ];
+
+        platforms.forEach(({ platform, arrowClass }) => {
+            const growth = PerformanceAnalyzer.calculateGrowth(video, platform);
+            if (PerformanceAnalyzer.isBestPerformer(video.id, platform, growth)) {
+                const arrow = UIComponentFactory.createPerformanceArrow(
+                    arrowClass, 
+                    `Best ${platform === 'all' ? 'overall' : platform} performer in last 24h (+${formatNumber(growth)} views)`
+                );
+                indicators.push(arrow.outerHTML);
+            }
+        });
+        
+        return indicators.join('');
+    }
+
+    createProducerBubbles(video: Video): HTMLElement[] {
+        const producersIds = Object.keys(video.contributions);
+        const totalViews = getLatestTotalViews(video);
+        const producerShare = totalViews / producersIds.length;
+
+        return producersIds.map((producerId) => {
+            const producer = producers[producerId];
+            if (!producer) return document.createElement('span');
+
+            const contribution = video.contributions[producerId] || 0;
+            return UIComponentFactory.createProducerBubble(producer, contribution, producerShare);
+        });
+    }
 
     renderVideoChart(video: Video) {
         const ctx = document.getElementById(`chart-${video.id}`) as HTMLCanvasElement | null;
         if (!ctx) return;
 
-        // Create datasets with actual timestamps for linear time scaling
-        const youtubeData = viewData.times.map((time, index) => ({
-            x: time,
-            y: video.youtubeViews[index]
-        }));
-        
-        const tiktokData = viewData.times.map((time, index) => ({
-            x: time,
-            y: video.tiktokViews[index]
-        }));
-
-        const instagramData = viewData.times.map((time, index) => ({
-            x: time,
-            y: video.instagramViews[index]
-        }));
-
-        // Calculate total views for each date
-        const totalData = viewData.times.map((date, index) => ({
-            x: new Date(date),
-            y: video.youtubeViews[index] + video.tiktokViews[index] + video.instagramViews[index]
-        }));
-
         const datasets = [
-            {
-                label: 'YouTube',
-                data: youtubeData,
-                borderColor: '#ff0000',
-                backgroundColor: 'rgba(255, 0, 0, 0.2)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#ff0000',
-                pointBorderColor: '#1a1a1a',
-                pointBorderWidth: 1,
-                pointRadius: 3,
-                pointHoverRadius: 5
-            },
-            {
-                label: 'TikTok',
-                data: tiktokData,
-                borderColor: '#ffffff',
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#ffffff',
-                pointBorderColor: '#1a1a1a',
-                pointBorderWidth: 1,
-                pointRadius: 3,
-                pointHoverRadius: 5
-            },
-            {
-                label: 'Instagram',
-                data: instagramData,
-                borderColor: '#ff69b4',
-                backgroundColor: 'rgba(255, 105, 180, 0.2)',
-                borderWidth: 2,
-                fill: true,
-                tension: 0.4,
-                pointBackgroundColor: '#ff69b4',
-                pointBorderColor: '#1a1a1a',
-                pointBorderWidth: 1,
-                pointRadius: 3,
-                pointHoverRadius: 5
-            },
-            {
-                label: 'Total',
-                data: totalData,
-                borderColor: '#ffd700',
-                backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                borderWidth: 3,
-                fill: false,
-                tension: 0.4,
-                pointBackgroundColor: '#ffd700',
-                pointBorderColor: '#1a1a1a',
-                pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 6
-            }
+            ChartManager.createDataset(
+                ChartManager.createTimeData(viewData.times, video.youtubeViews),
+                PLATFORM_CONFIG.youtube
+            ),
+            ChartManager.createDataset(
+                ChartManager.createTimeData(viewData.times, video.tiktokViews),
+                PLATFORM_CONFIG.tiktok
+            ),
+            ChartManager.createDataset(
+                ChartManager.createTimeData(viewData.times, video.instagramViews),
+                PLATFORM_CONFIG.instagram
+            ),
+            ChartManager.createDataset(
+                ChartManager.createTimeData(
+                    viewData.times,
+                    viewData.times.map((_, index) => video.youtubeViews[index] + video.tiktokViews[index] + video.instagramViews[index])
+                ),
+                PLATFORM_CONFIG.total
+            )
         ];
 
-        const chart = new Chart(ctx, {
+        const customTooltipLabel = (context: any) => {
+            return `${context.dataset.label}: ${formatNumber(context.parsed.y)} views`;
+        };
+
+        const chart = ChartManager.createChart(ctx, {
             type: 'line',
-            data: {
-                datasets: datasets
-            },
+            data: { datasets },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: true,
-                        position: 'top',
-                        labels: {
-                            color: '#cccccc',
-                            usePointStyle: true,
-                            padding: 15
-                        }
-                    },
-                    tooltip: {
-                        mode: 'index',
-                        intersect: false,
-                        backgroundColor: '#2d2d2d',
-                        titleColor: '#ffffff',
-                        bodyColor: '#ffffff',
-                        borderColor: '#ffd700',
-                        borderWidth: 1,
-                        callbacks: {
-                            title: function(context: any) {
-                                const date = new Date(context[0].parsed.x);
-                                const timeString = date.toLocaleTimeString('en-US', { 
-                                    hour: 'numeric', 
-                                    hour12: true 
-                                });
-                                const dateString = date.toLocaleDateString('en-US', { 
-                                    month: 'long', 
-                                    day: 'numeric' 
-                                });
-                                return `${dateString}, ${timeString}`;
-                            },
-                            label: function(context: any) {
-                                return `${context.dataset.label}: ${formatNumber(context.parsed.y)} views`;
-                            }
-                        }
-                    }
-                },
+                ...ChartManager.getChartOptions(true, customTooltipLabel),
                 scales: {
+                    ...CHART_DEFAULTS.scales,
                     x: {
-                        type: 'time',
-                        time: {
-                            unit: 'day',
-                            displayFormats: {
-                                day: 'MMM d'
-                            }
-                        },
-                        grid: {
-                            display: false
-                        },
+                        ...CHART_DEFAULTS.scales.x,
+                        type: 'timeseries' as const,
+                        grid: { display: false },
                         ticks: {
-                            color: '#cccccc',
-                            font: {
-                                size: 10
-                            }
-                        }
-                    },
-                    y: {
-                        grid: {
-                            color: '#333333'
-                        },
-                        ticks: {
-                            color: '#cccccc',
-                            callback: function(value: any) {
-                                return formatNumber(typeof value === 'number' ? value : Number(value));
-                            }
+                            ...CHART_DEFAULTS.scales.x.ticks,
+                            font: { size: 10 }
                         }
                     }
-                },
-                interaction: {
-                    mode: 'nearest',
-                    axis: 'x',
-                    intersect: false
                 }
             }
         });
@@ -826,30 +737,16 @@ class ProducerTracker {
     }
 
     showYouTubePlayer(videoLink: string, videoTitle: string) {
-        // Remove existing player if present
         const existingPlayer = document.querySelector('.youtube-player-fixed');
         if (existingPlayer) {
             existingPlayer.remove();
         }
 
-        // Create fixed player using template
-        const template = document.getElementById('youtube-player-template') as HTMLTemplateElement;
-        if (!template) {
-            throw new Error('YouTube player template not found');
-        }
-
-        const clone = template.content.cloneNode(true) as DocumentFragment;
-        const player = clone.querySelector('.youtube-player-fixed') as HTMLElement;
+        const player = TemplateManager.getElementFromTemplate<HTMLElement>('youtube-player-template', '.youtube-player-fixed');
         
-        if (!player) {
-            throw new Error('YouTube player element not found in template');
-        }
-
-        // Set title
         const titleElement = player.querySelector('h4');
         if (titleElement) titleElement.textContent = videoTitle;
 
-        // Set iframe src
         const iframe = player.querySelector('iframe') as HTMLIFrameElement;
         if (iframe) {
             iframe.src = videoLink.replace('/shorts/', '/embed/') + '?autoplay=1&rel=0';
@@ -857,7 +754,6 @@ class ProducerTracker {
         
         document.body.appendChild(player);
         
-        // Close player when clicking close button
         const closeButton = player.querySelector('.close-button') as HTMLElement;
         if (closeButton) {
             closeButton.addEventListener('click', () => {
@@ -865,8 +761,7 @@ class ProducerTracker {
             });
         }
         
-        // Close player with Escape key
-        document.addEventListener('keydown', function closeOnEscape(e) {
+        document.addEventListener('keydown', function closeOnEscape(e: KeyboardEvent) {
             if (e.key === 'Escape') {
                 player.remove();
                 document.removeEventListener('keydown', closeOnEscape);
