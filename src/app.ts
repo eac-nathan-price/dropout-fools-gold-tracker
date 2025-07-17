@@ -8,7 +8,10 @@ import {
     getProducerViewsForDate,
     formatNumber,
     getLatestTotalViews,
-    viewData
+    viewData,
+    PLATFORMS,
+    getPlatformViews,
+    getLatestPlatformViews
 } from './data.js';
 
 // Chart.js configuration defaults
@@ -88,7 +91,7 @@ const CHART_DEFAULTS = {
 };
 
 // Platform configuration
-const PLATFORM_CONFIG = {
+const PLATFORM_CONFIG: Record<string, PlatformConfig> = {
     youtube: {
         label: 'YouTube',
         borderColor: '#ff0000',
@@ -221,25 +224,15 @@ class PerformanceAnalyzer {
         return closestIndex;
     }
 
-    static calculateGrowth(video: Video, platform: Platform): number {
+    static calculateGrowth(video: Video, platform: ExtendedPlatform): number {
         const lastIndex = viewData.times.length - 1;
         const prevDayIndex = this.get24HourPreviousIndex();
-        
-        if (platform === 'youtube') {
-            return video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
-        } else if (platform === 'tiktok') {
-            return video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
-        } else if (platform === 'instagram') {
-            return video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex];
-        } else {
-            const youtubeGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
-            const tiktokGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
-            const instagramGrowth = video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex];
-            return youtubeGrowth + tiktokGrowth + instagramGrowth;
-        }
+        const currentViews = getPlatformViews(video, lastIndex);
+        const previousViews = getPlatformViews(video, prevDayIndex);
+        return currentViews[platform] - previousViews[platform];
     }
 
-    static isBestPerformer(videoId: string, platform: Platform, growth: number): boolean {
+    static isBestPerformer(videoId: string, platform: ExtendedPlatform, growth: number): boolean {
         let maxGrowth = -1;
         
         videoData.forEach(video => {
@@ -317,10 +310,13 @@ class UIComponentFactory {
 
 // Producer stats calculator class
 class ProducerStatsCalculator {
-    static getProducerStats(producerId: string) {
-        let youtubeTotal = 0;
-        let tiktokTotal = 0;
-        let instagramTotal = 0;
+    static getProducerStats(producerId: string): ExtendedPlatformData<number> & { videoCount: number; soloVideoCount: number } {
+        const platformTotals: ExtendedPlatformData<number> = {
+            youtube: 0,
+            tiktok: 0,
+            instagram: 0,
+            all: 0
+        };
         let videoCount = 0;
         let soloVideoCount = 0;
         
@@ -332,19 +328,21 @@ class ProducerStatsCalculator {
                     soloVideoCount++;
                 }
                 const sharePercentage = 1 / producers.length;
+                const latestViews = getLatestPlatformViews(video);
                 
-                const latestIndex = viewData.times.length - 1;
-                youtubeTotal += video.youtubeViews[latestIndex] * sharePercentage;
-                tiktokTotal += video.tiktokViews[latestIndex] * sharePercentage;
-                instagramTotal += video.instagramViews[latestIndex] * sharePercentage;
+                platformTotals.youtube += latestViews.youtube * sharePercentage;
+                platformTotals.tiktok += latestViews.tiktok * sharePercentage;
+                platformTotals.instagram += latestViews.instagram * sharePercentage;
+                platformTotals.all += latestViews.all * sharePercentage;
             }
         });
         
         return {
-            total: Math.round(youtubeTotal + tiktokTotal + instagramTotal),
-            youtube: Math.round(youtubeTotal),
-            tiktok: Math.round(tiktokTotal),
-            instagram: Math.round(instagramTotal),
+            ...platformTotals,
+            youtube: Math.round(platformTotals.youtube),
+            tiktok: Math.round(platformTotals.tiktok),
+            instagram: Math.round(platformTotals.instagram),
+            all: Math.round(platformTotals.all),
             videoCount: videoCount,
             soloVideoCount: soloVideoCount
         };
@@ -357,11 +355,9 @@ class ProducerStatsCalculator {
             const producers = Object.keys(video.contributions);
             if (producers.includes(producerId)) {
                 const sharePercentage = 1 / producers.length;
-                const latestIndex = viewData.times.length - 1;
+                const latestViews = getLatestPlatformViews(video);
                 
-                const totalVideoViews = video.youtubeViews[latestIndex] + video.tiktokViews[latestIndex] + video.instagramViews[latestIndex];
-                
-                const producerShare = Math.round(totalVideoViews * sharePercentage);
+                const producerShare = Math.round(latestViews.all * sharePercentage);
                 if (producerShare > 0) {
                     videoShares.push({ title: video.title, views: producerShare });
                 }
@@ -381,7 +377,7 @@ class ProducerStatsCalculator {
 
 // Main application class
 class ProducerTracker {
-    currentPlatform: Platform;
+    currentPlatform: ExtendedPlatform;
     producerChart: ChartType<'line', { x: Datelike; y: number; }[], unknown> | null;
     videoCharts: Map<string, ChartType<'line', { x: Datelike; y: number; }[], unknown>>;
 
@@ -406,7 +402,7 @@ class ProducerTracker {
         if (platformFilter) {
             platformFilter.addEventListener('change', (e: Event) => {
                 const target = e.target as HTMLSelectElement;
-                this.currentPlatform = target.value as Platform;
+                this.currentPlatform = target.value as ExtendedPlatform;
                 this.renderProducerComparisonChart();
                 this.renderProducerStats();
             });
@@ -471,7 +467,7 @@ class ProducerTracker {
             stats: ProducerStatsCalculator.getProducerStats(producer.id)
         }));
         
-        producerStats.sort((a, b) => b.stats.total - a.stats.total);
+        producerStats.sort((a, b) => b.stats.all - a.stats.all);
         const winner = producerStats[0];
         const loser = producerStats[producerStats.length - 1];
         
@@ -593,15 +589,18 @@ class ProducerTracker {
     }
 
     private setPlatformLinks(container: HTMLElement, video: Video): void {
-        const links = {
-            youtube: container.querySelector('.youtube-icon') as HTMLAnchorElement,
-            tiktok: container.querySelector('.tiktok-icon') as HTMLAnchorElement,
-            instagram: container.querySelector('.instagram-icon') as HTMLAnchorElement
+        const platformSelectors = {
+            youtube: '.youtube-icon',
+            tiktok: '.tiktok-icon',
+            instagram: '.instagram-icon'
         };
 
-        if (links.youtube) links.youtube.href = video.links.youtube;
-        if (links.tiktok) links.tiktok.href = video.links.tiktok;
-        if (links.instagram) links.instagram.href = video.links.instagram;
+        PLATFORMS.forEach(platform => {
+            const link = container.querySelector(platformSelectors[platform]) as HTMLAnchorElement;
+            if (link) {
+                link.href = video.links[platform];
+            }
+        });
     }
 
     private setContributionInfo(container: HTMLElement, video: Video): void {
@@ -648,7 +647,7 @@ class ProducerTracker {
 
     getPerformanceIndicators(video: Video): string {
         const indicators: string[] = [];
-        const platforms: { platform: Platform; arrowClass: string }[] = [
+        const platforms: { platform: ExtendedPlatform; arrowClass: string }[] = [
             { platform: 'youtube', arrowClass: 'youtube-arrow' },
             { platform: 'tiktok', arrowClass: 'tiktok-arrow' },
             { platform: 'instagram', arrowClass: 'instagram-arrow' },
@@ -688,22 +687,21 @@ class ProducerTracker {
         if (!ctx) return;
 
         const datasets = [
-            ChartManager.createDataset(
-                ChartManager.createTimeData(viewData.times, video.youtubeViews),
-                PLATFORM_CONFIG.youtube
+            // Platform datasets
+            ...PLATFORMS.map(platform =>
+                ChartManager.createDataset(
+                    ChartManager.createTimeData(viewData.times, video[platform] as number[]),
+                    PLATFORM_CONFIG[platform]
+                )
             ),
-            ChartManager.createDataset(
-                ChartManager.createTimeData(viewData.times, video.tiktokViews),
-                PLATFORM_CONFIG.tiktok
-            ),
-            ChartManager.createDataset(
-                ChartManager.createTimeData(viewData.times, video.instagramViews),
-                PLATFORM_CONFIG.instagram
-            ),
+            // Total dataset
             ChartManager.createDataset(
                 ChartManager.createTimeData(
                     viewData.times,
-                    viewData.times.map((_, index) => video.youtubeViews[index] + video.tiktokViews[index] + video.instagramViews[index])
+                    viewData.times.map((_, index) => {
+                        const platformViews = getPlatformViews(video, index);
+                        return platformViews.all;
+                    })
                 ),
                 PLATFORM_CONFIG.total
             )

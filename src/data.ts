@@ -26,6 +26,10 @@ export const producers: { [id: string]: Producer } = {
     }
 };
 
+// Platform configuration for consistent styling
+export const PLATFORMS = ['youtube', 'tiktok', 'instagram'] as const;
+export type PlatformKey = typeof PLATFORMS[number];
+
 // Combined view data structure
 export const viewData: ViewData = {
     times: [
@@ -220,9 +224,9 @@ export const videoViewData: VideoViewData[] = Object.keys(videoMetadata).map(id 
     }
     return {
         id: id,
-        youtubeViews: viewInfo.youtube,
-        tiktokViews: viewInfo.tiktok,
-        instagramViews: viewInfo.instagram
+        youtube: viewInfo.youtube,
+        tiktok: viewInfo.tiktok,
+        instagram: viewInfo.instagram
     };
 });
 
@@ -238,14 +242,30 @@ export const videoData: Video[] = Object.keys(videoMetadata).map(id => {
         title: metadata.title,
         links: metadata.links,
         contributions: metadata.contributions,
-        youtubeViews: viewInfo.youtube,
-        tiktokViews: viewInfo.tiktok,
-        instagramViews: viewInfo.instagram
+        youtube: viewInfo.youtube,
+        tiktok: viewInfo.tiktok,
+        instagram: viewInfo.instagram
     };
 });
 
+// Helper function to get platform views for a video at a specific index
+export function getPlatformViews(video: Video, index: number): ExtendedPlatformData<number> {
+    return {
+        youtube: video.youtube[index] || 0,
+        tiktok: video.tiktok[index] || 0,
+        instagram: video.instagram[index] || 0,
+        all: (video.youtube[index] || 0) + (video.tiktok[index] || 0) + (video.instagram[index] || 0)
+    };
+}
+
+// Helper function to get platform views for a video at the latest index
+export function getLatestPlatformViews(video: Video): ExtendedPlatformData<number> {
+    const latestIndex = viewData.times.length - 1;
+    return getPlatformViews(video, latestIndex);
+}
+
 // Helper function to calculate producer views for a specific date and platform
-export function getProducerViewsForDate(producerId: string, date: Date, platform: Platform = 'all'): number {
+export function getProducerViewsForDate(producerId: string, date: Date, platform: ExtendedPlatform = 'all'): number {
     const dateIndex = viewData.times.indexOf(date);
     if (dateIndex === -1) return 0;
     
@@ -255,18 +275,8 @@ export function getProducerViewsForDate(producerId: string, date: Date, platform
         const producers = Object.keys(video.contributions);
         if (producers.includes(producerId)) {
             const sharePercentage = 1 / producers.length; // Split equally between producers
-            
-            if (platform === 'youtube' || platform === 'all') {
-                totalViews += video.youtubeViews[dateIndex] * sharePercentage;
-            }
-            
-            if (platform === 'tiktok' || platform === 'all') {
-                totalViews += video.tiktokViews[dateIndex] * sharePercentage;
-            }
-            
-            if (platform === 'instagram' || platform === 'all') {
-                totalViews += video.instagramViews[dateIndex] * sharePercentage;
-            }
+            const platformViews = getPlatformViews(video, dateIndex);
+            totalViews += platformViews[platform] * sharePercentage;
         }
     });
     
@@ -287,9 +297,5 @@ export function formatNumber(num: number): string {
 
 // Helper function to get latest total views for a video
 export function getLatestTotalViews(video: Video): number {
-    const latestIndex = viewData.times.length - 1;
-    const latestYoutube = video.youtubeViews[latestIndex] || 0;
-    const latestTiktok = video.tiktokViews[latestIndex] || 0;
-    const latestInstagram = video.instagramViews[latestIndex] || 0;
-    return latestYoutube + latestTiktok + latestInstagram;
+    return getLatestPlatformViews(video).all;
 }
