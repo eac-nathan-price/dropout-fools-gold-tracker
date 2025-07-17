@@ -54,10 +54,7 @@ class ChartManager {
     }
 
     static createTimeData(times: Date[], values: number[]): any[] {
-        return times.map((time, index) => ({
-            x: time,
-            y: values[index]
-        }));
+        return times.map((time, index) => ({ x: time, y: values[index] }));
     }
 
     static getChartOptions(showLegend: boolean = true, customTooltipLabel?: (context: any) => string) {
@@ -66,19 +63,8 @@ class ChartManager {
         return {
             ...CHART_DEFAULTS.base,
             plugins: {
-                legend: {
-                    display: showLegend,
-                    position: 'top' as const,
-                    labels: {
-                        color: '#cccccc',
-                        usePointStyle: true,
-                        padding: 15
-                    }
-                },
-                tooltip: {
-                    ...CHART_DEFAULTS.tooltip,
-                    callbacks: tooltipCallbacks
-                }
+                legend: { ...CHART_DEFAULTS.legend, display: showLegend },
+                tooltip: { ...CHART_DEFAULTS.tooltip, callbacks: tooltipCallbacks }
             },
             scales: CHART_DEFAULTS.scales
         };
@@ -275,7 +261,10 @@ class ProducerTracker {
         this.producerChart = ChartManager.createChart(ctx, {
             type: 'line',
             data: { datasets },
-            options: ChartManager.getChartOptions(false, customTooltipLabel)
+            options: {
+                ...ChartManager.getChartOptions(false, customTooltipLabel),
+                scales: CHART_DEFAULTS.scales
+            }
         });
     }
 
@@ -476,18 +465,7 @@ class ProducerTracker {
             data: { datasets },
             options: {
                 ...ChartManager.getChartOptions(true, customTooltipLabel),
-                scales: {
-                    ...CHART_DEFAULTS.scales,
-                    x: {
-                        ...CHART_DEFAULTS.scales.x,
-                        type: 'timeseries' as const,
-                        grid: { display: false },
-                        ticks: {
-                            ...CHART_DEFAULTS.scales.x.ticks,
-                            font: { size: 10 }
-                        }
-                    }
-                }
+                scales: CHART_DEFAULTS.scales,
             }
         });
         this.videoCharts.set(video.id, chart);

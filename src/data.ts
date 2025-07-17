@@ -262,7 +262,7 @@ export const CHART_DEFAULTS = {
     },
     scales: {
         x: {
-            type: 'timeseries' as const,
+            type: 'time' as const,
             time: {
                 unit: 'day' as const,
                 displayFormats: {
@@ -316,6 +316,15 @@ export const CHART_DEFAULTS = {
         pointBorderWidth: 1,
         pointRadius: 3,
         pointHoverRadius: 5
+    },
+    legend: {
+        display: true,
+        position: 'top' as const,
+        labels: {
+            color: '#cccccc',
+            usePointStyle: true,
+            padding: 15
+        }
     }
 };
 
@@ -380,7 +389,5 @@ export function formatNumber(num: number): string {
 
 // Helper function to create an object from keys and a mapping function
 export function objectFromEntries<K extends string, T>(keys: K[], mapFn: (key: K) => T): Record<K, T> {
-    return Object.fromEntries(
-        keys.map(key => [key, mapFn(key)])
-    ) as Record<K, T>;
+    return Object.fromEntries(keys.map(key => [key, mapFn(key)])) as Record<K, T>;
 }
