@@ -210,6 +210,10 @@ class ProducerTracker {
         card.dataset.producer = producer.id;
         card.style.background = producer.color;
 
+        // Create tooltip with view sources
+        const tooltipText = this.createProducerTooltip(producer.id);
+        card.title = tooltipText;
+
         // Add crown for winner
         if (producer.id === winner.id) {
             const crown = document.createElement('div');
@@ -455,6 +459,39 @@ class ProducerTracker {
         indicator.title = `Best value: ${formatNumber(viewsPerDollar)} views per dollar`;
 
         return indicator;
+    }
+
+    createProducerTooltip(producerId: string): string {
+        const videoShares: { title: string; views: number }[] = [];
+        
+        videoData.forEach(video => {
+            const producers = getProducersFromContributions(video.contributions);
+            if (producers.includes(producerId)) {
+                const sharePercentage = 1 / producers.length;
+                const latestIndex = sampleTimes.length - 1;
+                
+                // Calculate total views for this video (all platforms combined)
+                const totalVideoViews = video.youtubeViews[latestIndex] + 
+                                      video.tiktokViews[latestIndex] + 
+                                      (video.instagramViews ? video.instagramViews[latestIndex] : 0);
+                
+                const producerShare = Math.round(totalVideoViews * sharePercentage);
+                if (producerShare > 0) {
+                    videoShares.push({ title: video.title, views: producerShare });
+                }
+            }
+        });
+        
+        // Sort by views in decreasing order
+        videoShares.sort((a, b) => b.views - a.views);
+        
+        // Create tooltip text
+        let tooltipText = 'Most views:';
+        videoShares.forEach(video => {
+            tooltipText += `\n${video.title}: ${formatNumber(video.views)}`;
+        });
+        
+        return tooltipText;
     }
 
     createProducerBubbles(video: Video): HTMLElement[] {
