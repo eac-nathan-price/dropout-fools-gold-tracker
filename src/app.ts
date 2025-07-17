@@ -4,15 +4,14 @@ import 'chartjs-adapter-date-fns';
 import {
     producers,
     videoData,
-    sampleTimes,
     getProducerViewsForDate,
     formatNumber,
     getLatestTotalViews,
-    Video
-} from './data';
+    viewData
+} from './data.js';
 
 class ProducerTracker {
-    currentPlatform: string;
+    currentPlatform: Platform;
     producerChart: Chart<'line', { x: number | string | Date; y: number; }[], unknown> | null;
     videoCharts: Map<string, Chart<'line', { x: number | string | Date; y: number; }[], unknown>>;
 
@@ -38,7 +37,7 @@ class ProducerTracker {
         if (platformFilter) {
             platformFilter.addEventListener('change', (e: Event) => {
                 const target = e.target as HTMLSelectElement;
-                this.currentPlatform = target.value;
+                this.currentPlatform = target.value as Platform;
                 this.renderProducerComparisonChart();
                 this.renderProducerStats();
             });
@@ -67,9 +66,9 @@ class ProducerTracker {
         
         // Create datasets for each producer with actual timestamps
         const datasets = Object.values(producers).map(producer => {
-            const data = sampleTimes.map(time => ({
+            const data = viewData.times.map(time => ({
                 x: time,
-                y: getProducerViewsForDate(producer.id, time, this.currentPlatform as 'all' | 'youtube' | 'tiktok' | 'instagram')
+                y: getProducerViewsForDate(producer.id, time, this.currentPlatform)
             }));
             
             return {
@@ -280,7 +279,7 @@ class ProducerTracker {
                 const sharePercentage = 1 / producers.length;
                 
                 // Always calculate all platform totals for display in cards
-                const latestIndex = sampleTimes.length - 1;
+                const latestIndex = viewData.times.length - 1;
                 youtubeTotal += video.youtubeViews[latestIndex] * sharePercentage;
                 tiktokTotal += video.tiktokViews[latestIndex] * sharePercentage;
                 
@@ -466,7 +465,7 @@ class ProducerTracker {
             const producers = Object.keys(video.contributions);
             if (producers.includes(producerId)) {
                 const sharePercentage = 1 / producers.length;
-                const latestIndex = sampleTimes.length - 1;
+                const latestIndex = viewData.times.length - 1;
                 
                 // Calculate total views for this video (all platforms combined)
                 const totalVideoViews = video.youtubeViews[latestIndex] + 
@@ -536,7 +535,7 @@ class ProducerTracker {
         const indicators: string[] = [];
         
         // Get the most recent data point and the one closest to 24 hours ago
-        const lastIndex = sampleTimes.length - 1;
+        const lastIndex = viewData.times.length - 1;
         const prevDayIndex = this.get24HourPreviousIndex();
         
         // Calculate 24-hour growth for each platform
@@ -594,15 +593,15 @@ class ProducerTracker {
     }
 
     get24HourPreviousIndex(): number {
-        const lastIndex = sampleTimes.length - 1;
-        const currentTime = sampleTimes[lastIndex];
+        const lastIndex = viewData.times.length - 1;
+        const currentTime = viewData.times[lastIndex];
         const targetTime = new Date(currentTime.getTime() - 24 * 60 * 60 * 1000); // 24 hours ago
         
         let closestIndex = 0;
-        let minDifference = Math.abs(sampleTimes[0].getTime() - targetTime.getTime());
+        let minDifference = Math.abs(viewData.times[0].getTime() - targetTime.getTime());
         
-        for (let i = 1; i < sampleTimes.length; i++) {
-            const difference = Math.abs(sampleTimes[i].getTime() - targetTime.getTime());
+        for (let i = 1; i < viewData.times.length; i++) {
+            const difference = Math.abs(viewData.times[i].getTime() - targetTime.getTime());
             if (difference < minDifference) {
                 minDifference = difference;
                 closestIndex = i;
@@ -613,7 +612,7 @@ class ProducerTracker {
     }
 
     isBestPerformer(videoId: string, platform: 'youtube' | 'tiktok' | 'instagram' | 'overall', growth: number): boolean {
-        const lastIndex = sampleTimes.length - 1;
+        const lastIndex = viewData.times.length - 1;
         const prevDayIndex = this.get24HourPreviousIndex();
         
         let maxGrowth = -1;
@@ -667,23 +666,23 @@ class ProducerTracker {
         if (!ctx) return;
 
         // Create datasets with actual timestamps for linear time scaling
-        const youtubeData = sampleTimes.map((time, index) => ({
+        const youtubeData = viewData.times.map((time, index) => ({
             x: time,
             y: video.youtubeViews[index]
         }));
         
-        const tiktokData = sampleTimes.map((time, index) => ({
+        const tiktokData = viewData.times.map((time, index) => ({
             x: time,
             y: video.tiktokViews[index]
         }));
 
-        const instagramData = video.instagramViews ? sampleTimes.map((time, index) => ({
+        const instagramData = video.instagramViews ? viewData.times.map((time, index) => ({
             x: time,
             y: video.instagramViews[index]
         })) : [];
 
         // Calculate total views for each date
-        const totalData = sampleTimes.map((date, index) => ({
+        const totalData = viewData.times.map((date, index) => ({
             x: new Date(date),
             y: video.youtubeViews[index] + video.tiktokViews[index] + (video.instagramViews ? video.instagramViews[index] : 0)
         }));
@@ -890,7 +889,7 @@ class ProducerTracker {
 
     updateLastUpdated() {
         const lastUpdated = document.getElementById('last-updated');
-        const latestDate = sampleTimes[sampleTimes.length - 1];
+        const latestDate = viewData.times[viewData.times.length - 1];
         
         if (lastUpdated && latestDate) {
             const date = new Date(latestDate);

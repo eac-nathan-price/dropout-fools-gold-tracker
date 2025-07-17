@@ -1,69 +1,4 @@
-// Producer data structure for tracking 4 producers' performance
-// Each video is posted on both YouTube and TikTok
-// Some videos are shared between multiple producers
-
-export interface Producer {
-    id: string;
-    name: string;
-    fullName: string;
-    color: string;
-}
-
-export interface VideoMetadata {
-    id: string;
-    title: string;
-    link: string;
-    producers: string[];
-}
-
-export interface VideoViewData {
-    id: string;
-    youtubeViews: number[];
-    tiktokViews: number[];
-    instagramViews: number[];
-}
-
-export interface Video {
-    id: string;
-    title: string;
-    links: {
-        youtube: string;
-        tiktok: string;
-        instagram: string;
-    };
-    contributions: {
-        [producerId: string]: number;
-    };
-    youtubeViews: number[];
-    tiktokViews: number[];
-    instagramViews: number[];
-}
-
-export interface ViewData {
-    times: Date[];
-    videos: {
-        [videoId: string]: {
-            youtube: number[];
-            tiktok: number[];
-            instagram: number[];
-        };
-    };
-}
-
-export interface VideoMetadataCollection {
-    [videoId: string]: {
-        title: string;
-        links: {
-            youtube: string;
-            tiktok: string;
-            instagram: string;
-        };
-        contributions: {
-            [producerId: string]: number; // Dollar amount contributed
-        };
-    };
-}
-
+// Producer data structure
 export const producers: { [id: string]: Producer } = {
     "trapp": {
         id: "trapp",
@@ -278,9 +213,6 @@ export const videoMetadata: VideoMetadataCollection = {
     }
 };
 
-// Legacy arrays for backward compatibility
-export const sampleTimes: Date[] = viewData.times;
-
 export const videoViewData: VideoViewData[] = Object.keys(videoMetadata).map(id => {
     const viewInfo = viewData.videos[id];
     if (!viewInfo) {
@@ -313,7 +245,7 @@ export const videoData: Video[] = Object.keys(videoMetadata).map(id => {
 });
 
 // Helper function to calculate producer views for a specific date and platform
-export function getProducerViewsForDate(producerId: string, date: Date, platform: 'youtube' | 'tiktok' | 'instagram' | 'all' = 'all'): number {
+export function getProducerViewsForDate(producerId: string, date: Date, platform: Platform = 'all'): number {
     const dateIndex = viewData.times.indexOf(date);
     if (dateIndex === -1) return 0;
     
@@ -332,7 +264,7 @@ export function getProducerViewsForDate(producerId: string, date: Date, platform
                 totalViews += video.tiktokViews[dateIndex] * sharePercentage;
             }
             
-            if ((platform === 'instagram' || platform === 'all') && video.instagramViews) {
+            if (platform === 'instagram' || platform === 'all') {
                 totalViews += video.instagramViews[dateIndex] * sharePercentage;
             }
         }
@@ -360,43 +292,4 @@ export function getLatestTotalViews(video: Video): number {
     const latestTiktok = video.tiktokViews[latestIndex] || 0;
     const latestInstagram = video.instagramViews ? video.instagramViews[latestIndex] || 0 : 0;
     return latestYoutube + latestTiktok + latestInstagram;
-}
-
-// Helper function to update video view data (for future HTTP integration)
-export function updateVideoViewData(videoId: string, newViewData: Partial<VideoViewData>): void {
-    const index = videoViewData.findIndex(vd => vd.id === videoId);
-    if (index !== -1) {
-        videoViewData[index] = { ...videoViewData[index], ...newViewData };
-        // Update the combined videoData for backward compatibility
-        const metadata = videoMetadata[videoId];
-        if (metadata) {
-            const combinedIndex = videoData.findIndex(v => v.id === videoId);
-            if (combinedIndex !== -1) {
-                videoData[combinedIndex] = { ...metadata, ...videoViewData[index] };
-            }
-        }
-    }
-}
-
-// Helper function to add new sample time (for future HTTP integration)
-export function addSampleTime(date: Date): void {
-    if (!viewData.times.find(time => time.getTime() === date.getTime())) {
-        viewData.times.push(date);
-        // Add zeros for all videos at the new time
-        Object.keys(viewData.videos).forEach(videoId => {
-            viewData.videos[videoId].youtube.push(0);
-            viewData.videos[videoId].tiktok.push(0);
-            viewData.videos[videoId].instagram.push(0);
-        });
-    }
-}
-
-// Helper function to update view data in the new structure (for future HTTP integration)
-export function updateViewData(newViewData: Partial<ViewData>): void {
-    if (newViewData.times) {
-        viewData.times = newViewData.times;
-    }
-    if (newViewData.videos) {
-        Object.assign(viewData.videos, newViewData.videos);
-    }
 }
