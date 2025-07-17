@@ -5,7 +5,7 @@ export const viewData: ViewData = {
 };
 
 export const PLATFORMS = ['youtube', 'tiktok', 'instagram'] as const;
-export const EXTENDED_PLATFORMS = ['all', ...PLATFORMS] as const;
+export const EXTENDED_PLATFORMS = [...PLATFORMS, 'all'] as const;
 
 // Producer data structure
 export const producers: { [id: string]: Producer } = {
