@@ -247,10 +247,7 @@ class ProducerTracker {
         if (tiktokCount) tiktokCount.textContent = `TT: ${formatNumber(producer.stats.tiktok)}`;
 
         const instagramCount = card.querySelector('.instagram-count') as HTMLElement;
-        if (instagramCount && producer.stats.instagram > 0) {
-            instagramCount.textContent = `IR: ${formatNumber(producer.stats.instagram)}`;
-            instagramCount.style.display = 'inline';
-        }
+        if (instagramCount) instagramCount.textContent = `IR: ${formatNumber(producer.stats.instagram)}`;
 
         const videoCount = card.querySelector('.producer-video-count');
         const shortsText = producer.stats.videoCount === 1 ? 'Short' : 'Shorts';
@@ -282,10 +279,7 @@ class ProducerTracker {
                 const latestIndex = viewData.times.length - 1;
                 youtubeTotal += video.youtubeViews[latestIndex] * sharePercentage;
                 tiktokTotal += video.tiktokViews[latestIndex] * sharePercentage;
-                
-                if (video.instagramViews) {
-                    instagramTotal += video.instagramViews[latestIndex] * sharePercentage;
-                }
+                instagramTotal += video.instagramViews[latestIndex] * sharePercentage;
             }
         });
         
@@ -468,9 +462,7 @@ class ProducerTracker {
                 const latestIndex = viewData.times.length - 1;
                 
                 // Calculate total views for this video (all platforms combined)
-                const totalVideoViews = video.youtubeViews[latestIndex] + 
-                                      video.tiktokViews[latestIndex] + 
-                                      (video.instagramViews ? video.instagramViews[latestIndex] : 0);
+                const totalVideoViews = video.youtubeViews[latestIndex] + video.tiktokViews[latestIndex] + video.instagramViews[latestIndex];
                 
                 const producerShare = Math.round(totalVideoViews * sharePercentage);
                 if (producerShare > 0) {
@@ -541,14 +533,14 @@ class ProducerTracker {
         // Calculate 24-hour growth for each platform
         const youtubeGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
         const tiktokGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
-        const instagramGrowth = video.instagramViews ? video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex] : 0;
+        const instagramGrowth = video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex];
         const totalGrowth = youtubeGrowth + tiktokGrowth + instagramGrowth;
         
         // Check if this video is the best performer in each category
         const isBestYouTube = this.isBestPerformer(video.id, 'youtube', youtubeGrowth);
         const isBestTiktok = this.isBestPerformer(video.id, 'tiktok', tiktokGrowth);
         const isBestInstagram = this.isBestPerformer(video.id, 'instagram', instagramGrowth);
-        const isBestOverall = this.isBestPerformer(video.id, 'overall', totalGrowth);
+        const isBestOverall = this.isBestPerformer(video.id, 'all', totalGrowth);
         
         if (isBestYouTube) {
             const arrow = this.createPerformanceArrow('youtube-arrow', `Best YouTube performer in last 24h (+${formatNumber(youtubeGrowth)} views)`);
@@ -611,7 +603,7 @@ class ProducerTracker {
         return closestIndex;
     }
 
-    isBestPerformer(videoId: string, platform: 'youtube' | 'tiktok' | 'instagram' | 'overall', growth: number): boolean {
+    isBestPerformer(videoId: string, platform: Platform, growth: number): boolean {
         const lastIndex = viewData.times.length - 1;
         const prevDayIndex = this.get24HourPreviousIndex();
         
@@ -625,11 +617,11 @@ class ProducerTracker {
             } else if (platform === 'tiktok') {
                 videoGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
             } else if (platform === 'instagram') {
-                videoGrowth = video.instagramViews ? video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex] : 0;
-            } else if (platform === 'overall') {
+                videoGrowth = video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex];
+            } else if (platform === 'all') {
                 const youtubeGrowth = video.youtubeViews[lastIndex] - video.youtubeViews[prevDayIndex];
                 const tiktokGrowth = video.tiktokViews[lastIndex] - video.tiktokViews[prevDayIndex];
-                const instagramGrowth = video.instagramViews ? video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex] : 0;
+                const instagramGrowth = video.instagramViews[lastIndex] - video.instagramViews[prevDayIndex];
                 videoGrowth = youtubeGrowth + tiktokGrowth + instagramGrowth;
             }
             
@@ -676,15 +668,15 @@ class ProducerTracker {
             y: video.tiktokViews[index]
         }));
 
-        const instagramData = video.instagramViews ? viewData.times.map((time, index) => ({
+        const instagramData = viewData.times.map((time, index) => ({
             x: time,
             y: video.instagramViews[index]
-        })) : [];
+        }));
 
         // Calculate total views for each date
         const totalData = viewData.times.map((date, index) => ({
             x: new Date(date),
-            y: video.youtubeViews[index] + video.tiktokViews[index] + (video.instagramViews ? video.instagramViews[index] : 0)
+            y: video.youtubeViews[index] + video.tiktokViews[index] + video.instagramViews[index]
         }));
 
         const datasets = [
@@ -715,12 +707,8 @@ class ProducerTracker {
                 pointBorderWidth: 1,
                 pointRadius: 3,
                 pointHoverRadius: 5
-            }
-        ];
-
-        // Add Instagram dataset if data exists
-        if (instagramData.length > 0) {
-            datasets.push({
+            },
+            {
                 label: 'Instagram',
                 data: instagramData,
                 borderColor: '#ff69b4',
@@ -733,23 +721,22 @@ class ProducerTracker {
                 pointBorderWidth: 1,
                 pointRadius: 3,
                 pointHoverRadius: 5
-            });
-        }
-
-        datasets.push({
-            label: 'Total',
-            data: totalData,
-            borderColor: '#ffd700',
-            backgroundColor: 'rgba(255, 215, 0, 0.1)',
-            borderWidth: 3,
-            fill: false,
-            tension: 0.4,
-            pointBackgroundColor: '#ffd700',
-            pointBorderColor: '#1a1a1a',
-            pointBorderWidth: 2,
-            pointRadius: 4,
-            pointHoverRadius: 6
-        });
+            },
+            {
+                label: 'Total',
+                data: totalData,
+                borderColor: '#ffd700',
+                backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                borderWidth: 3,
+                fill: false,
+                tension: 0.4,
+                pointBackgroundColor: '#ffd700',
+                pointBorderColor: '#1a1a1a',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                pointHoverRadius: 6
+            }
+        ];
 
         const chart = new Chart(ctx, {
             type: 'line',

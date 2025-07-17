@@ -290,6 +290,6 @@ export function getLatestTotalViews(video: Video): number {
     const latestIndex = viewData.times.length - 1;
     const latestYoutube = video.youtubeViews[latestIndex] || 0;
     const latestTiktok = video.tiktokViews[latestIndex] || 0;
-    const latestInstagram = video.instagramViews ? video.instagramViews[latestIndex] || 0 : 0;
+    const latestInstagram = video.instagramViews[latestIndex] || 0;
     return latestYoutube + latestTiktok + latestInstagram;
 }
