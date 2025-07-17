@@ -49,6 +49,7 @@ type ViewData = {
 type VideoMetadataCollection = {
   [videoId: string]: {
       title: string,
+      fullTitle: string,
       links: PlatformData<string>,
       contributions: {
           [producerId: string]: number

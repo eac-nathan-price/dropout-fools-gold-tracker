@@ -1,3 +1,9 @@
+import rawViews from './views.json' with { type: "json" };
+export const viewData: ViewData = {
+    times: rawViews.times.map(time => new Date(time)),
+    videos: rawViews.videos
+};
+
 export const PLATFORMS = ['youtube', 'tiktok', 'instagram'] as const;
 export const EXTENDED_PLATFORMS = ['all', ...PLATFORMS] as const;
 
@@ -29,81 +35,11 @@ export const producers: { [id: string]: Producer } = {
     }
 };
 
-// Combined view data structure
-export const viewData: ViewData = {
-    times: [
-        new Date("2025-07-14T16:00:00-07:00"),
-        new Date("2025-07-15T00:00:00-07:00"),
-        new Date("2025-07-15T08:00:00-07:00"),
-        new Date("2025-07-15T16:00:00-07:00"),
-        new Date("2025-07-15T20:00:00-07:00"),
-        new Date("2025-07-16T06:00:00-07:00"),
-        new Date("2025-07-16T10:00:00-07:00"),
-        new Date("2025-07-16T14:00:00-07:00"),
-        new Date("2025-07-16T16:00:00-07:00"),
-        new Date("2025-07-16T18:00:00-07:00"),
-        new Date("2025-07-16T20:00:00-07:00"),
-        new Date("2025-07-16T22:00:00-07:00"),
-        new Date("2025-07-17T00:00:00-07:00")
-    ],
-    videos: {
-        "peel-robalino": {
-            youtube: [0, 50000, 78000, 113000, 130000, 151000, 158000, 166000, 171000, 175000, 179000, 182000, 186000],
-            tiktok: [0, 61700, 84300, 108800, 125600, 148000, 154900, 162000, 165700, 168900, 173900, 176700, 179200],
-            instagram: [0, 148000, 296000, 509000, 537000, 570000, 581000, 591000, 596000, 600000, 604000, 607000, 609000]
-        },
-        "annas-king": {
-            youtube: [0, 70000, 118000, 218000, 261000, 312000, 328000, 356000, 368000, 375000, 381000, 387000, 393000],
-            tiktok: [0, 127400, 255500, 354800, 391600, 435400, 456400, 473500, 482500, 490100, 499000, 504800, 508300],
-            instagram: [0, 114000, 229000, 396000, 428000, 466000, 482000, 505000, 517000, 523000, 531000, 537000, 542000]
-        },
-        "katies-d20": {
-            youtube: [0, 201000, 403000, 636000, 709000, 804000, 841000, 878000, 901000, 918000, 933000, 945000, 958000],
-            tiktok: [0, 338900, 545200, 726200, 797300, 868000, 894400, 925200, 942800, 955300, 971400, 980300, 986900],
-            instagram: [0, 229000, 458000, 797000, 873000, 995000, 1000000, 1025000, 1050000, 1075000, 1100000, 1100000, 1100000]
-        },
-        "erikas-haircut": {
-            youtube: [0, 189000, 364700, 492000, 555000, 626000, 650000, 676000, 691000, 701000, 708000, 714000, 722000],
-            tiktok: [0, 103700, 145800, 181500, 199000, 219600, 227600, 235900, 240100, 243600, 248000, 250200, 251600],
-            instagram: [0, 113000, 226000, 390000, 415000, 442000, 451000, 460000, 466000, 469000, 474000, 477000, 479000]
-        },
-        "sephies-car-wash": {
-            youtube: [0, 66000, 102000, 145000, 165000, 194000, 201000, 210000, 216000, 220000, 223000, 227000, 231000],
-            tiktok: [0, 73700, 97600, 122900, 136300, 150300, 155600, 160900, 163900, 166500, 170100, 172300, 174100],
-            instagram: [0, 162000, 323000, 553000, 585000, 625000, 638000, 651000, 659000, 664000, 671000, 674000, 677000]
-        },
-        "grants-crack": {
-            youtube: [0, 53000, 79000, 111000, 124000, 140000, 145000, 151000, 156000, 159000, 161000, 164000, 167000],
-            tiktok: [0, 64100, 97900, 136200, 155300, 179400, 190300, 201100, 206100, 210200, 215300, 218400, 220500],
-            instagram: [0, 86000, 172000, 296000, 314000, 331000, 337000, 342000, 346000, 349000, 352000, 355000, 356000]
-        },
-        "jonnys-puppy-bowl": {
-            youtube: [0, 46000, 71000, 104000, 117000, 134000, 139000, 145000, 148000, 151000, 153000, 155000, 158000],
-            tiktok: [0, 89600, 130700, 165400, 178400, 192500, 197300, 201900, 204500, 206100, 208300, 209600, 210800],
-            instagram: [0, 68000, 136000, 234000, 251000, 266000, 271000, 277000, 280000, 282000, 286000, 288000, 289000]
-        },
-        "lily-izzys-milk": {
-            youtube: [0, 66000, 107000, 158000, 181000, 208000, 217000, 226000, 233000, 237000, 242000, 247000, 252000],
-            tiktok: [0, 292000, 422800, 570100, 636700, 696600, 725500, 765700, 787300, 804300, 822500, 834200, 843200],
-            instagram: [0, 420000, 840000, 1500000, 1700000, 2000000, 2100000, 2200000, 2250000, 2300000, 2300000, 2300000, 2300000]
-        },
-        "izzys-buttholes": {
-            youtube: [0, 186000, 372000, 654000, 769000, 912000, 957000, 1000000, 1025000, 1050000, 1075000, 1100000, 1100000],
-            tiktok: [0, 90300, 125200, 167500, 189500, 206700, 210800, 214700, 217100, 218900, 221400, 222900, 224000],
-            instagram: [0, 114000, 227000, 392000, 424000, 453000, 465000, 475000, 481000, 485000, 491000, 494000, 497000]
-        },
-        "vics-brennans-exit": {
-            youtube: [0, 415000, 825000, 1300000, 1600000, 1800000, 1900000, 1900000, 2000000, 2000000, 2000000, 2100000, 2100000],
-            tiktok: [0, 881200, 1500000, 1900000, 2100000, 2200000, 2300000, 2300000, 2400000, 2400000, 2400000, 2400000, 2400000],
-            instagram: [0, 540000, 1080000, 1800000, 2000000, 2200000, 2200000, 2300000, 2300000, 2300000, 2300000, 2300000, 2400000]
-        }
-    }
-};
-
 // Video metadata - static information that doesn't change
 export const videoMetadata: VideoMetadataCollection = {
     "peel-robalino": {
         title: "Peel Robalino",
+        fullTitle: "Paul Covers His Entire Body In Glue 🤯",
         links: {
             youtube: "https://www.youtube.com/shorts/gMpx4A2lRTE",
             tiktok: "https://www.tiktok.com/@gamechangershow/video/7527082801120677133",
@@ -115,6 +51,7 @@ export const videoMetadata: VideoMetadataCollection = {
     },
     "annas-king": {
         title: "Anna's King for a Day",
+        fullTitle: "Anna Makes Strangers King for a Day 👑",
         links: {
             youtube: "https://www.youtube.com/shorts/UjHk90dxX20",
             tiktok: "https://www.tiktok.com/@gamechangershow/video/7527078952171523341",
@@ -126,6 +63,7 @@ export const videoMetadata: VideoMetadataCollection = {
     },
     "katies-d20": {
         title: "Katie's D20 on a Bus",
+        fullTitle: "'Dimension 20: On a Bus' Season Premiere (DM'd by Katie Marovitch)",
         links: {
             youtube: "https://www.youtube.com/shorts/5feqZBLXrMg",
             tiktok: "https://www.tiktok.com/@gamechangershow/video/7527080453610704183",
@@ -137,6 +75,7 @@ export const videoMetadata: VideoMetadataCollection = {
     },
     "erikas-haircut": {
         title: "Erika's Haircut",
+        fullTitle: "Erika Roasts Sam with a Haircut 🪒",
         links: {
             youtube: "https://www.youtube.com/shorts/wQVIfuNIc9I",
             tiktok: "https://www.tiktok.com/@gamechangershow/video/7527086113614318862",
@@ -148,6 +87,7 @@ export const videoMetadata: VideoMetadataCollection = {
     },
     "sephies-car-wash": {
         title: "Sephie's Sexy Car Wash",
+        fullTitle: "Vote For Your Favorite Sexy Dropout Carwash ❤️",
         links: {
             youtube: "https://www.youtube.com/shorts/HD5pyGbO_Is",
             tiktok: "https://www.tiktok.com/@gamechangershow/video/7527082014449716494",
@@ -160,6 +100,7 @@ export const videoMetadata: VideoMetadataCollection = {
     },
     "grants-crack": {
         title: "Grant's Crack",
+        fullTitle: "Can Grant Get Over 40 Cracks At the Chiropractor? 💥",
         links: {
             youtube: "https://www.youtube.com/shorts/1lnl0jYln8s",
             tiktok: "https://www.tiktok.com/@gamechangershow/video/7527083827689229582",
@@ -171,6 +112,7 @@ export const videoMetadata: VideoMetadataCollection = {
     },
     "jonnys-puppy-bowl": {
         title: "Jonny's Human Puppy Bowl",
+        fullTitle: "Presenting: The Human Puppy Bowl 🏈🐶",
         links: {
             youtube: "https://www.youtube.com/shorts/aagwlycxv_k",
             tiktok: "https://www.tiktok.com/@gamechangershow/video/7527084871580142861",
@@ -183,6 +125,7 @@ export const videoMetadata: VideoMetadataCollection = {
     },
     "lily-izzys-milk": {
         title: "Lily & Izzy's Milk Taste Test",
+        fullTitle: "Jordan Takes the Breast Milk Taste Test Challenge 🥛",
         links: {
             youtube: "https://www.youtube.com/shorts/nfwmaVlp_hY",
             tiktok: "https://www.tiktok.com/@gamechangershow/video/7527085610322890039",
@@ -194,6 +137,7 @@ export const videoMetadata: VideoMetadataCollection = {
     },
     "izzys-buttholes": {
         title: "Izzy's Buttholes",
+        fullTitle: "Izzy Spends $3,000 On Animated Buttholes 🍑",
         links: {
             youtube: "https://www.youtube.com/shorts/Wm8SMsmWCts",
             tiktok: "https://www.tiktok.com/@gamechangershow/video/7527086642415422734",
@@ -206,6 +150,7 @@ export const videoMetadata: VideoMetadataCollection = {
     },
     "vics-brennans-exit": {
         title: "Vic's Brennan's Exit Video",
+        fullTitle: "Why I'm Leaving Dropout",
         links: {
             youtube: "https://www.youtube.com/shorts/oO4kgmYivoQ",
             tiktok: "https://www.tiktok.com/@gamechangershow/video/7527087942339267895",
