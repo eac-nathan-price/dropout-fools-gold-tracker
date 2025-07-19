@@ -15,7 +15,9 @@ import {
     CHART_DEFAULTS,
     populateProducerCardViews,
     EXTENDED_PLATFORMS,
-    PLATFORMS
+    PLATFORMS,
+    THEME_CONFIGS,
+    type ThemeMode
 } from './data.js';
 
 // Template utility class
@@ -141,9 +143,10 @@ class UIComponentFactory {
         return indicator;
     }
 
-    static createProducerBubble(producer: Producer, contribution: number, producerShare: number): HTMLElement {
+    static createProducerBubble(producer: Producer, contribution: number, producerShare: number, themeManager?: ThemeManager): HTMLElement {
         const bubble = TemplateManager.getElementFromTemplate<HTMLElement>('producer-bubble-template', '.producer-bubble');
-        bubble.style.background = producer.color;
+        const producerColor = themeManager ? themeManager.getProducerColor(producer.id) : producer.color;
+        bubble.style.background = producerColor;
         bubble.title = `${producer.fullName}: $${contribution} - ${formatNumber(producerShare)} views`;
         const img = bubble.querySelector('.profile-image') as HTMLImageElement;
         if (img) Object.assign(img, { src: `/assets/${producer.id}.png`, alt: producer.name });
@@ -191,16 +194,291 @@ class ProducerStatsCalculator {
     }
 }
 
+// Theme manager class
+class ThemeManager {
+    private currentTheme: ThemeMode = 'dark';
+    private isColorblind: boolean = false;
+    private charts: Map<string, ChartType<'line', { x: Datelike; y: number; }[], unknown>> = new Map();
+
+    constructor() {
+        this.setupEventListeners();
+        this.loadSavedTheme();
+    }
+
+    private setupEventListeners(): void {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const colorblindToggle = document.getElementById('colorblind-toggle');
+
+        if (darkModeToggle) {
+            darkModeToggle.addEventListener('click', () => {
+                this.toggleDarkMode();
+            });
+        }
+
+        if (colorblindToggle) {
+            colorblindToggle.addEventListener('click', () => {
+                this.toggleColorblind();
+            });
+        }
+    }
+
+    private loadSavedTheme(): void {
+        const savedTheme = localStorage.getItem('fools-gold-theme') as ThemeMode;
+        const savedColorblind = localStorage.getItem('fools-gold-colorblind') === 'true';
+        
+        if (savedTheme && THEME_CONFIGS[savedTheme]) {
+            this.currentTheme = savedTheme;
+        }
+        
+        this.isColorblind = savedColorblind;
+        this.updateTheme();
+        this.updateButtonStates();
+    }
+
+    private toggleDarkMode(): void {
+        if (this.currentTheme === 'dark' || this.currentTheme === 'dark-colorblind') {
+            this.currentTheme = this.isColorblind ? 'light-colorblind' : 'light';
+        } else {
+            this.currentTheme = this.isColorblind ? 'dark-colorblind' : 'dark';
+        }
+        localStorage.setItem('fools-gold-theme', this.currentTheme);
+        this.updateTheme();
+        this.updateButtonStates();
+    }
+
+    private toggleColorblind(): void {
+        this.isColorblind = !this.isColorblind;
+        localStorage.setItem('fools-gold-colorblind', this.isColorblind.toString());
+        
+        // Update theme based on current state
+        if (this.currentTheme === 'dark') {
+            this.currentTheme = this.isColorblind ? 'dark-colorblind' : 'dark';
+        } else if (this.currentTheme === 'light') {
+            this.currentTheme = this.isColorblind ? 'light-colorblind' : 'light';
+        } else if (this.currentTheme === 'dark-colorblind') {
+            this.currentTheme = this.isColorblind ? 'dark-colorblind' : 'dark';
+        } else if (this.currentTheme === 'light-colorblind') {
+            this.currentTheme = this.isColorblind ? 'light-colorblind' : 'light';
+        }
+        
+        localStorage.setItem('fools-gold-theme', this.currentTheme);
+        this.updateTheme();
+        this.updateButtonStates();
+    }
+
+    private updateButtonStates(): void {
+        const darkModeToggle = document.getElementById('dark-mode-toggle');
+        const colorblindToggle = document.getElementById('colorblind-toggle');
+        
+        if (darkModeToggle) {
+            const sunIcon = darkModeToggle.querySelector('.sun-icon') as HTMLElement;
+            const moonIcon = darkModeToggle.querySelector('.moon-icon') as HTMLElement;
+            
+            if (this.currentTheme === 'dark' || this.currentTheme === 'dark-colorblind') {
+                sunIcon.style.display = 'block';
+                moonIcon.style.display = 'none';
+            } else {
+                sunIcon.style.display = 'none';
+                moonIcon.style.display = 'block';
+            }
+        }
+        
+        if (colorblindToggle) {
+            const eyeIcon = colorblindToggle.querySelector('.eye-icon') as HTMLElement;
+            const eyeSlashIcon = colorblindToggle.querySelector('.eye-slash-icon') as HTMLElement;
+            
+            if (this.isColorblind) {
+                eyeIcon.style.display = 'none';
+                eyeSlashIcon.style.display = 'block';
+                colorblindToggle.classList.add('active');
+            } else {
+                eyeIcon.style.display = 'block';
+                eyeSlashIcon.style.display = 'none';
+                colorblindToggle.classList.remove('active');
+            }
+        }
+    }
+
+    private updateTheme(): void {
+        // Apply CSS variables
+        this.applyTheme(this.currentTheme);
+
+        // Update all charts
+        this.updateCharts();
+        
+        // Update producer cards and bubbles
+        this.updateProducerCards();
+    }
+
+    private applyTheme(theme: ThemeMode): void {
+        const config = THEME_CONFIGS[theme];
+        const root = document.documentElement;
+        const body = document.body;
+
+        // Set data-theme attribute for CSS targeting
+        body.setAttribute('data-theme', theme);
+
+        root.style.setProperty('--body-bg', config.body.background);
+        root.style.setProperty('--body-color', config.body.color);
+        root.style.setProperty('--header-bg', config.header.background);
+        root.style.setProperty('--header-title-color', config.header.titleColor);
+        root.style.setProperty('--header-subtitle-color', config.header.subtitleColor);
+        root.style.setProperty('--chart-card-bg', config.chartCard.background);
+        root.style.setProperty('--chart-card-border', config.chartCard.borderColor);
+        root.style.setProperty('--chart-card-hover-border', config.chartCard.hoverBorderColor);
+        root.style.setProperty('--chart-grid-color', config.chart.gridColor);
+        root.style.setProperty('--chart-text-color', config.chart.textColor);
+        root.style.setProperty('--chart-tooltip-bg', config.chart.tooltipBackground);
+        root.style.setProperty('--chart-tooltip-border', config.chart.tooltipBorderColor);
+        root.style.setProperty('--producer-trapp', config.producers.trapp);
+        root.style.setProperty('--producer-rekha', config.producers.rekha);
+        root.style.setProperty('--producer-jordan', config.producers.jordan);
+        root.style.setProperty('--producer-sam', config.producers.sam);
+        root.style.setProperty('--platform-youtube', config.platforms.youtube);
+        root.style.setProperty('--platform-tiktok', config.platforms.tiktok);
+        root.style.setProperty('--platform-instagram', config.platforms.instagram);
+        root.style.setProperty('--platform-all', config.platforms.all);
+    }
+
+    registerChart(id: string, chart: ChartType<'line', { x: Datelike; y: number; }[], unknown>): void {
+        this.charts.set(id, chart);
+    }
+
+    unregisterChart(id: string): void {
+        this.charts.delete(id);
+    }
+
+    private updateCharts(): void {
+        this.charts.forEach((chart, id) => {
+            if (chart) {
+                this.updateChartColors(chart);
+                chart.update('none');
+            }
+        });
+    }
+
+    private updateChartColors(chart: ChartType<'line', { x: Datelike; y: number; }[], unknown>): void {
+        const config = THEME_CONFIGS[this.currentTheme];
+        
+        // Update scales
+        if (chart.options.scales) {
+            if (chart.options.scales.x && chart.options.scales.x.grid) {
+                chart.options.scales.x.grid.color = config.chart.gridColor;
+            }
+            if (chart.options.scales.x && chart.options.scales.x.ticks) {
+                chart.options.scales.x.ticks.color = config.chart.textColor;
+            }
+            if (chart.options.scales.y && chart.options.scales.y.grid) {
+                chart.options.scales.y.grid.color = config.chart.gridColor;
+            }
+            if (chart.options.scales.y && chart.options.scales.y.ticks) {
+                chart.options.scales.y.ticks.color = config.chart.textColor;
+            }
+        }
+
+        // Update tooltip
+        if (chart.options.plugins?.tooltip) {
+            chart.options.plugins.tooltip.backgroundColor = config.chart.tooltipBackground;
+            chart.options.plugins.tooltip.titleColor = config.chart.textColor;
+            chart.options.plugins.tooltip.bodyColor = config.chart.textColor;
+            chart.options.plugins.tooltip.borderColor = config.chart.tooltipBorderColor;
+        }
+
+        // Update legend
+        if (chart.options.plugins?.legend?.labels) {
+            chart.options.plugins.legend.labels.color = config.chart.textColor;
+        }
+
+        // Update datasets
+        chart.data.datasets.forEach((dataset, index) => {
+            if (dataset.label) {
+                // Update producer colors
+                const producerId = Object.keys(producers).find(id => 
+                    producers[id].name === dataset.label || producers[id].fullName === dataset.label
+                );
+                if (producerId) {
+                    const producerColor = config.producers[producerId as keyof typeof config.producers];
+                    dataset.borderColor = producerColor;
+                    dataset.backgroundColor = this.getBackgroundColor(producerColor);
+                    dataset.pointBackgroundColor = producerColor;
+                    dataset.pointBorderColor = producerColor;
+                }
+
+                // Update platform colors
+                const platform = Object.keys(PLATFORM_CONFIG).find(key => 
+                    PLATFORM_CONFIG[key as keyof typeof PLATFORM_CONFIG].label === dataset.label
+                );
+                if (platform) {
+                    const platformColor = config.platforms[platform as keyof typeof config.platforms];
+                    dataset.borderColor = platformColor;
+                    dataset.backgroundColor = this.getBackgroundColor(platformColor);
+                    dataset.pointBackgroundColor = platformColor;
+                    dataset.pointBorderColor = platformColor;
+                }
+            }
+        });
+    }
+
+    private getBackgroundColor(color: string): string {
+        // Convert hex to rgba with transparency
+        const hex = color.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        return `rgba(${r}, ${g}, ${b}, 0.2)`;
+    }
+
+    getCurrentTheme(): ThemeMode {
+        return this.currentTheme;
+    }
+
+    getProducerColor(producerId: string): string {
+        const config = THEME_CONFIGS[this.currentTheme];
+        return config.producers[producerId as keyof typeof config.producers] || '#cccccc';
+    }
+
+    getPlatformColor(platform: string): string {
+        const config = THEME_CONFIGS[this.currentTheme];
+        return config.platforms[platform as keyof typeof config.platforms] || '#cccccc';
+    }
+
+    updateProducerCards(): void {
+        const producerCards = document.querySelectorAll('.legend-item');
+        producerCards.forEach(card => {
+            const producerId = card.getAttribute('data-producer');
+            if (producerId) {
+                const producerColor = this.getProducerColor(producerId);
+                (card as HTMLElement).style.background = producerColor;
+            }
+        });
+
+        // Update producer bubbles
+        const producerBubbles = document.querySelectorAll('.producer-bubble');
+        producerBubbles.forEach(bubble => {
+            const producerName = bubble.querySelector('.producer-name')?.textContent;
+            if (producerName) {
+                const producer = Object.values(producers).find(p => p.name === producerName);
+                if (producer) {
+                    const producerColor = this.getProducerColor(producer.id);
+                    (bubble as HTMLElement).style.background = producerColor;
+                }
+            }
+        });
+    }
+}
+
 // Main application class
 class ProducerTracker {
     currentPlatform: ExtendedPlatform;
     producerChart: ChartType<'line', { x: Datelike; y: number; }[], unknown> | null;
     videoCharts: Map<string, ChartType<'line', { x: Datelike; y: number; }[], unknown>>;
+    themeManager: ThemeManager;
 
     constructor() {
         this.currentPlatform = 'all';
         this.producerChart = null;
         this.videoCharts = new Map();
+        this.themeManager = new ThemeManager();
         this.init();
     }
 
@@ -242,13 +520,15 @@ class ProducerTracker {
                 viewData.times,
                 viewData.times.map(time => getProducerViewsForDate(producer.id, time, this.currentPlatform))
             );
+            const producerColor = this.themeManager.getProducerColor(producer.id);
             return ChartManager.createDataset(data, {
                 label: producer.name,
-                borderColor: producer.color,
-                backgroundColor: producer.color + '20',
+                borderColor: producerColor,
+                backgroundColor: producerColor + '20',
                 fill: false,
                 borderWidth: 3,
-                pointBackgroundColor: producer.color,
+                pointBackgroundColor: producerColor,
+                pointBorderColor: producerColor,
                 pointBorderWidth: 2,
                 pointRadius: 5,
                 pointHoverRadius: 8
@@ -266,6 +546,9 @@ class ProducerTracker {
                 scales: CHART_DEFAULTS.scales
             }
         });
+
+        // Register chart with theme manager
+        this.themeManager.registerChart('producer-comparison', this.producerChart);
     }
 
     renderProducerStats() {
@@ -288,7 +571,8 @@ class ProducerTracker {
     createProducerCard(producer: any, winner: any, loser: any): HTMLElement {
         const card = TemplateManager.getElementFromTemplate<HTMLElement>('producer-card-template', '.legend-item');
         card.dataset.producer = producer.id;
-        card.style.background = producer.color;
+        const producerColor = this.themeManager.getProducerColor(producer.id);
+        card.style.background = producerColor;
         card.title = ProducerStatsCalculator.createProducerTooltip(producer.id);
         if (producer.id === winner.id) {
             const crown = document.createElement('div');
@@ -430,21 +714,30 @@ class ProducerTracker {
             const producer = producers[producerId];
             if (!producer) return document.createElement('span');
             const contribution = video.contributions[producerId] || 0;
-            return UIComponentFactory.createProducerBubble(producer, contribution, producerShare);
+            return UIComponentFactory.createProducerBubble(producer, contribution, producerShare, this.themeManager);
         });
     }
 
     renderVideoChart(video: Video) {
         const ctx = document.getElementById(`chart-${video.id}`) as HTMLCanvasElement | null;
         if (!ctx) return;
+        
+        // Use theme colors for platform datasets
         const datasets = [
             // Platform datasets
-            ...PLATFORMS.map(platform =>
-                ChartManager.createDataset(
+            ...PLATFORMS.map(platform => {
+                const platformColor = this.themeManager.getPlatformColor(platform);
+                return ChartManager.createDataset(
                     ChartManager.createTimeData(viewData.times, video[platform] as number[]),
-                    PLATFORM_CONFIG[platform]
-                )
-            ),
+                    {
+                        ...PLATFORM_CONFIG[platform],
+                        borderColor: platformColor,
+                        backgroundColor: platformColor.replace('#', 'rgba(').replace(')', ', 0.2)'),
+                        pointBackgroundColor: platformColor,
+                        pointBorderColor: platformColor
+                    }
+                );
+            }),
             // Total dataset
             ChartManager.createDataset(
                 ChartManager.createTimeData(
@@ -454,7 +747,13 @@ class ProducerTracker {
                         return platformViews.all;
                     })
                 ),
-                PLATFORM_CONFIG.all
+                {
+                    ...PLATFORM_CONFIG.all,
+                    borderColor: this.themeManager.getPlatformColor('all'),
+                    backgroundColor: this.themeManager.getPlatformColor('all').replace('#', 'rgba(').replace(')', ', 0.2)'),
+                    pointBackgroundColor: this.themeManager.getPlatformColor('all'),
+                    pointBorderColor: this.themeManager.getPlatformColor('all')
+                }
             )
         ];
         const customTooltipLabel = (context: any) => {
@@ -469,6 +768,9 @@ class ProducerTracker {
             }
         });
         this.videoCharts.set(video.id, chart);
+        
+        // Register chart with theme manager
+        this.themeManager.registerChart(`video-${video.id}`, chart);
     }
 
     showYouTubePlayer(videoLink: string, videoTitle: string) {

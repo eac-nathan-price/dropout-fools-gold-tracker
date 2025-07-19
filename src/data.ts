@@ -340,3 +340,149 @@ export function formatNumber(num: number): string {
 export function objectFromEntries<K extends string, T>(keys: K[], mapFn: (key: K) => T): Record<K, T> {
     return Object.fromEntries(keys.map(key => [key, mapFn(key)])) as Record<K, T>;
 }
+
+// Theme configurations
+export type ThemeMode = 'dark' | 'light' | 'dark-colorblind' | 'light-colorblind';
+
+export const THEME_CONFIGS = {
+    'dark': {
+        name: 'Dark',
+        body: {
+            background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+            color: '#ffffff'
+        },
+        header: {
+            background: 'rgba(45, 45, 45, 0.95)',
+            titleColor: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+            subtitleColor: '#cccccc'
+        },
+        chartCard: {
+            background: '#1a1a1a',
+            borderColor: 'rgba(255, 255, 0, 0.1)',
+            hoverBorderColor: 'rgba(255, 255, 0, 0.2)'
+        },
+        chart: {
+            gridColor: '#333333',
+            textColor: '#cccccc',
+            tooltipBackground: '#2d2d2d',
+            tooltipBorderColor: '#ffd700'
+        },
+        producers: {
+            trapp: '#10b981',
+            rekha: '#06b6d4', 
+            jordan: '#6366f1',
+            sam: '#8b5cf6'
+        },
+        platforms: {
+            youtube: '#ff0000',
+            tiktok: '#ffffff',
+            instagram: '#ff69b4',
+            all: '#ffd700'
+        }
+    },
+    'light': {
+        name: 'Light',
+        body: {
+            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+            color: '#212529'
+        },
+        header: {
+            background: 'rgba(255, 255, 255, 0.95)',
+            titleColor: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+            subtitleColor: '#6c757d'
+        },
+        chartCard: {
+            background: '#ffffff',
+            borderColor: 'rgba(255, 215, 0, 0.3)',
+            hoverBorderColor: 'rgba(255, 215, 0, 0.5)'
+        },
+        chart: {
+            gridColor: '#dee2e6',
+            textColor: '#495057',
+            tooltipBackground: '#ffffff',
+            tooltipBorderColor: '#ffd700'
+        },
+        producers: {
+            trapp: '#10b981',
+            rekha: '#06b6d4',
+            jordan: '#6366f1', 
+            sam: '#8b5cf6'
+        },
+        platforms: {
+            youtube: '#ff0000',
+            tiktok: '#000000',
+            instagram: '#ff69b4',
+            all: '#ffd700'
+        }
+    },
+    'dark-colorblind': {
+        name: 'Dark Colorblind',
+        body: {
+            background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+            color: '#ffffff'
+        },
+        header: {
+            background: 'rgba(45, 45, 45, 0.95)',
+            titleColor: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+            subtitleColor: '#cccccc'
+        },
+        chartCard: {
+            background: '#1a1a1a',
+            borderColor: 'rgba(255, 255, 0, 0.1)',
+            hoverBorderColor: 'rgba(255, 255, 0, 0.2)'
+        },
+        chart: {
+            gridColor: '#333333',
+            textColor: '#cccccc',
+            tooltipBackground: '#2d2d2d',
+            tooltipBorderColor: '#ffd700'
+        },
+        producers: {
+            trapp: '#e6194b',      // Red
+            rekha: '#3cb44b',      // Green  
+            jordan: '#ffe119',     // Yellow
+            sam: '#4363d8'         // Blue
+        },
+        platforms: {
+            youtube: '#e6194b',    // Red
+            tiktok: '#3cb44b',     // Green
+            instagram: '#ffe119',  // Yellow
+            all: '#4363d8'         // Blue
+        }
+    },
+    'light-colorblind': {
+        name: 'Light Colorblind',
+        body: {
+            background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+            color: '#212529'
+        },
+        header: {
+            background: 'rgba(255, 255, 255, 0.95)',
+            titleColor: 'linear-gradient(135deg, #ffd700, #ffed4e)',
+            subtitleColor: '#6c757d'
+        },
+        chartCard: {
+            background: '#ffffff',
+            borderColor: 'rgba(255, 215, 0, 0.3)',
+            hoverBorderColor: 'rgba(255, 215, 0, 0.5)'
+        },
+        chart: {
+            gridColor: '#dee2e6',
+            textColor: '#495057',
+            tooltipBackground: '#ffffff',
+            tooltipBorderColor: '#ffd700'
+        },
+        producers: {
+            trapp: '#e6194b',      // Red
+            rekha: '#3cb44b',      // Green  
+            jordan: '#ffe119',     // Yellow
+            sam: '#4363d8'         // Blue
+        },
+        platforms: {
+            youtube: '#e6194b',    // Red
+            tiktok: '#3cb44b',     // Green
+            instagram: '#ffe119',  // Yellow
+            all: '#4363d8'         // Blue
+        }
+    }
+};
