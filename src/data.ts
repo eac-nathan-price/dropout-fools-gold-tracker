@@ -259,7 +259,7 @@ export const CHART_DEFAULTS = {
     },
     dataset: {
         borderWidth: 2,
-        fill: true,
+        fill: false,
         tension: 0.4,
         pointBorderColor: '#1a1a1a',
         pointBorderWidth: 1,
@@ -375,7 +375,7 @@ export const THEME_CONFIGS = {
         },
         platforms: {
             youtube: '#ff0000',
-            tiktok: '#ffffff',
+            tiktok: '#00ff00',
             instagram: '#ff69b4',
             all: '#ffd700'
         }
@@ -410,7 +410,7 @@ export const THEME_CONFIGS = {
         },
         platforms: {
             youtube: '#ff0000',
-            tiktok: '#000000',
+            tiktok: '#00ff00',
             instagram: '#ff69b4',
             all: '#ffd700'
         }
@@ -440,14 +440,14 @@ export const THEME_CONFIGS = {
         producers: {
             trapp: '#e6194b',      // Red
             rekha: '#3cb44b',      // Green  
-            jordan: '#ffe119',     // Yellow
-            sam: '#4363d8'         // Blue
+            jordan: '#4363d8',     // Blue
+            sam: '#ffe119'         // Yellow
         },
         platforms: {
             youtube: '#e6194b',    // Red
             tiktok: '#3cb44b',     // Green
-            instagram: '#ffe119',  // Yellow
-            all: '#4363d8'         // Blue
+            instagram: '#4363d8',  // Blue
+            all: '#ffe119'         // Yellow
         }
     },
     'light-colorblind': {
@@ -475,14 +475,14 @@ export const THEME_CONFIGS = {
         producers: {
             trapp: '#e6194b',      // Red
             rekha: '#3cb44b',      // Green  
-            jordan: '#ffe119',     // Yellow
-            sam: '#4363d8'         // Blue
+            jordan: '#4363d8',     // Blue
+            sam: '#ffe119'         // Yellow
         },
         platforms: {
             youtube: '#e6194b',    // Red
             tiktok: '#3cb44b',     // Green
-            instagram: '#ffe119',  // Yellow
-            all: '#4363d8'         // Blue
+            instagram: '#4363d8',  // Blue
+            all: '#ffe119'         // Yellow
         }
     }
 };

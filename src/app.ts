@@ -308,6 +308,14 @@ class ThemeManager {
         
         // Update producer cards and bubbles
         this.updateProducerCards();
+        
+        // Force re-render of video charts to ensure proper theme application
+        this.forceVideoChartsUpdate();
+    }
+
+    private forceVideoChartsUpdate(): void {
+        // Trigger a custom event that the main app can listen to
+        window.dispatchEvent(new CustomEvent('themeChanged'));
     }
 
     private applyTheme(theme: ThemeMode): void {
@@ -352,7 +360,7 @@ class ThemeManager {
         this.charts.forEach((chart, id) => {
             if (chart) {
                 this.updateChartColors(chart);
-                chart.update('none');
+                chart.update('active');
             }
         });
     }
@@ -509,6 +517,23 @@ class ProducerTracker {
                 }
             });
         });
+        
+        // Listen for theme changes and re-render video charts
+        window.addEventListener('themeChanged', () => {
+            setTimeout(() => {
+                this.videoCharts.forEach((chart, videoId) => {
+                    if (chart) {
+                        chart.destroy();
+                    }
+                });
+                this.videoCharts.clear();
+                
+                // Re-render all video charts with new theme
+                videoData.forEach(video => {
+                    this.renderVideoChart(video);
+                });
+            }, 100);
+        });
     }
 
     renderProducerComparisonChart() {
@@ -543,7 +568,63 @@ class ProducerTracker {
             data: { datasets },
             options: {
                 ...ChartManager.getChartOptions(false, customTooltipLabel),
-                scales: CHART_DEFAULTS.scales
+                scales: {
+                    x: {
+                        type: 'time' as const,
+                        time: {
+                            unit: 'day' as const,
+                            displayFormats: {
+                                day: 'MMM d'
+                            }
+                        },
+                        grid: {
+                            color: this.themeManager.getCurrentTheme().includes('light') ? '#dee2e6' : '#333333'
+                        },
+                        ticks: {
+                            color: this.themeManager.getCurrentTheme().includes('light') ? '#495057' : '#cccccc',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: this.themeManager.getCurrentTheme().includes('light') ? '#dee2e6' : '#333333'
+                        },
+                        ticks: {
+                            color: this.themeManager.getCurrentTheme().includes('light') ? '#495057' : '#cccccc',
+                            callback: function(value: any) {
+                                return formatNumber(typeof value === 'number' ? value : Number(value));
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index' as const,
+                        intersect: false,
+                        backgroundColor: this.themeManager.getCurrentTheme().includes('light') ? '#ffffff' : '#2d2d2d',
+                        titleColor: this.themeManager.getCurrentTheme().includes('light') ? '#495057' : '#ffffff',
+                        bodyColor: this.themeManager.getCurrentTheme().includes('light') ? '#495057' : '#ffffff',
+                        borderColor: '#ffd700',
+                        borderWidth: 1,
+                        callbacks: {
+                            title: function(context: any) {
+                                const date = new Date(context[0].parsed.x);
+                                const timeString = date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+                                const dateString = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+                                return `${dateString}, ${timeString}`;
+                            },
+                            label: customTooltipLabel
+                        }
+                    }
+                },
+                backgroundColor: this.themeManager.getCurrentTheme().includes('light') ? '#ffffff' : 'transparent',
+                maintainAspectRatio: false,
+                responsive: true
             }
         });
 
@@ -734,7 +815,8 @@ class ProducerTracker {
                         borderColor: platformColor,
                         backgroundColor: platformColor.replace('#', 'rgba(').replace(')', ', 0.2)'),
                         pointBackgroundColor: platformColor,
-                        pointBorderColor: platformColor
+                        pointBorderColor: platformColor,
+                        fill: false
                     }
                 );
             }),
@@ -752,7 +834,8 @@ class ProducerTracker {
                     borderColor: this.themeManager.getPlatformColor('all'),
                     backgroundColor: this.themeManager.getPlatformColor('all').replace('#', 'rgba(').replace(')', ', 0.2)'),
                     pointBackgroundColor: this.themeManager.getPlatformColor('all'),
-                    pointBorderColor: this.themeManager.getPlatformColor('all')
+                    pointBorderColor: this.themeManager.getPlatformColor('all'),
+                    fill: false
                 }
             )
         ];
@@ -764,7 +847,68 @@ class ProducerTracker {
             data: { datasets },
             options: {
                 ...ChartManager.getChartOptions(true, customTooltipLabel),
-                scales: CHART_DEFAULTS.scales,
+                scales: {
+                    x: {
+                        type: 'time' as const,
+                        time: {
+                            unit: 'day' as const,
+                            displayFormats: {
+                                day: 'MMM d'
+                            }
+                        },
+                        grid: {
+                            color: this.themeManager.getCurrentTheme().includes('light') ? '#dee2e6' : '#333333'
+                        },
+                        ticks: {
+                            color: this.themeManager.getCurrentTheme().includes('light') ? '#495057' : '#cccccc',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: this.themeManager.getCurrentTheme().includes('light') ? '#dee2e6' : '#333333'
+                        },
+                        ticks: {
+                            color: this.themeManager.getCurrentTheme().includes('light') ? '#495057' : '#cccccc',
+                            callback: function(value: any) {
+                                return formatNumber(typeof value === 'number' ? value : Number(value));
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top' as const,
+                        labels: {
+                            color: this.themeManager.getCurrentTheme().includes('light') ? '#495057' : '#cccccc',
+                            usePointStyle: true,
+                            padding: 15
+                        }
+                    },
+                    tooltip: {
+                        mode: 'index' as const,
+                        intersect: false,
+                        backgroundColor: this.themeManager.getCurrentTheme().includes('light') ? '#ffffff' : '#2d2d2d',
+                        titleColor: this.themeManager.getCurrentTheme().includes('light') ? '#495057' : '#ffffff',
+                        bodyColor: this.themeManager.getCurrentTheme().includes('light') ? '#495057' : '#ffffff',
+                        borderColor: '#ffd700',
+                        borderWidth: 1,
+                        callbacks: {
+                            title: function(context: any) {
+                                const date = new Date(context[0].parsed.x);
+                                const timeString = date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
+                                const dateString = date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+                                return `${dateString}, ${timeString}`;
+                            }
+                        }
+                    }
+                },
+                backgroundColor: this.themeManager.getCurrentTheme().includes('light') ? '#ffffff' : 'transparent',
+                maintainAspectRatio: false,
+                responsive: true
             }
         });
         this.videoCharts.set(video.id, chart);

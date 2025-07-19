@@ -268,6 +268,86 @@ body[data-theme="light-colorblind"] .video-charts h2 {
     color: #212529;
 }
 
+/* Light theme adjustments for individual video chart containers */
+body[data-theme="light"] .chart-container,
+body[data-theme="light-colorblind"] .chart-container {
+    background: #ffffff !important;
+    border-color: rgba(255, 215, 0, 0.3) !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+body[data-theme="light"] .chart-container:hover,
+body[data-theme="light-colorblind"] .chart-container:hover {
+    border-color: rgba(255, 215, 0, 0.5) !important;
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Light theme adjustments for chart titles and text */
+body[data-theme="light"] .chart-title,
+body[data-theme="light-colorblind"] .chart-title {
+    color: #212529 !important;
+}
+
+body[data-theme="light"] .total-views-display,
+body[data-theme="light-colorblind"] .total-views-display {
+    color: #212529 !important;
+}
+
+body[data-theme="light"] .total-contribution,
+body[data-theme="light-colorblind"] .total-contribution {
+    color: #212529 !important;
+}
+
+/* Light theme adjustments for chart subheader */
+body[data-theme="light"] .chart-subheader,
+body[data-theme="light-colorblind"] .chart-subheader {
+    border-bottom-color: #dee2e6 !important;
+}
+
+/* Light theme adjustments for footer */
+body[data-theme="light"] .footer,
+body[data-theme="light-colorblind"] .footer {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border-color: rgba(255, 215, 0, 0.3) !important;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+body[data-theme="light"] .footer p,
+body[data-theme="light-colorblind"] .footer p {
+    color: #212529 !important;
+}
+
+/* Light theme adjustments for individual video chart backgrounds */
+body[data-theme="light"] .chart-container canvas,
+body[data-theme="light-colorblind"] .chart-container canvas {
+    background: #ffffff !important;
+}
+
+/* Force chart containers to have white backgrounds in light mode */
+body[data-theme="light"] .chart-container,
+body[data-theme="light-colorblind"] .chart-container {
+    background: #ffffff !important;
+}
+
+/* Force chart canvas to have white background in light mode */
+body[data-theme="light"] .chart-container canvas,
+body[data-theme="light-colorblind"] .chart-container canvas {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
+}
+
+/* Ensure chart areas are properly visible in light mode */
+body[data-theme="light"] .chart-container *,
+body[data-theme="light-colorblind"] .chart-container * {
+    background-color: transparent !important;
+}
+
+/* Light theme adjustments for TikTok arrow */
+body[data-theme="light"] .tiktok-arrow,
+body[data-theme="light-colorblind"] .tiktok-arrow {
+    color: #6c757d !important;
+}
+
 .platform-icon:hover {
     transform: scale(1.1);
     background: rgba(255, 255, 255, 0.2);
@@ -830,6 +910,13 @@ body[data-theme="light-colorblind"] .video-charts h2 {
     flex: 1;
     max-height: 200px !important;
     width: 100% !important;
+}
+
+/* Force white background on chart canvas in light mode */
+body[data-theme="light"] canvas,
+body[data-theme="light-colorblind"] canvas {
+    background: #ffffff !important;
+    background-color: #ffffff !important;
 }
 
 /* Footer */
