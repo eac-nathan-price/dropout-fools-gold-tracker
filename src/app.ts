@@ -16,7 +16,8 @@ import {
     populateProducerCardViews,
     EXTENDED_PLATFORMS,
     PLATFORMS,
-    fetchAndMergeApiData
+    fetchAndMergeApiData,
+    startAutomaticRefresh
 } from './data.js';
 
 // Template utility class
@@ -225,28 +226,8 @@ class ProducerTracker {
         this.renderVideoCharts();
         this.renderProducerStats();
         
-        // Fetch and merge API data on startup
-        this.fetchAndUpdateData();
-    }
-
-    // Method to fetch and update data from API
-    async fetchAndUpdateData() {
-        const refreshButton = document.getElementById('refresh-data-btn') as HTMLButtonElement;
-        if (refreshButton) {
-            refreshButton.disabled = true;
-            refreshButton.textContent = '⏳ Updating...';
-        }
-        
-        try {
-            await fetchAndMergeApiData();
-        } catch (error) {
-            console.error('Failed to fetch API data:', error);
-        } finally {
-            if (refreshButton) {
-                refreshButton.disabled = false;
-                refreshButton.textContent = '🔄 Refresh Data';
-            }
-        }
+        // Start automatic refresh every 10 minutes
+        startAutomaticRefresh();
     }
 
     setupEventListeners() {
@@ -284,14 +265,6 @@ class ProducerTracker {
             this.refreshAllCharts();
             this.updateLastUpdated();
         });
-
-        // Add refresh button event listener
-        const refreshButton = document.getElementById('refresh-data-btn');
-        if (refreshButton) {
-            refreshButton.addEventListener('click', () => {
-                this.fetchAndUpdateData();
-            });
-        }
     }
 
     // Method to refresh all charts when new data is available

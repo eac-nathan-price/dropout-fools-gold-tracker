@@ -12,6 +12,7 @@
 </head>
 <body>
     <div class="container">
+        <div id="progress-bar" class="progress-bar" style="display: none;"></div>
         <header class="header">
             <div class="header-content">
                 <div class="header-text">
@@ -86,8 +87,10 @@
         </section>
 
         <footer class="footer">
-            <p>Last updated: <span id="last-updated">Loading...</span></p>
-            <button id="refresh-data-btn" class="refresh-button">🔄 Refresh Data</button>
+            <div class="footer-timestamps">
+                <p>Last updated: <span id="last-updated">Loading...</span></p>
+                <p>Last check: <span id="last-check">Loading...</span></p>
+            </div>
         </footer>
     </div>
 

@@ -29,8 +29,17 @@ type ApiResponse = {
     };
 };
 
+// Track last API check time
+let lastApiCheckTime: Date | null = null;
+
 // Function to fetch and merge API data
 export async function fetchAndMergeApiData(): Promise<void> {
+    // Show progress bar
+    const progressBar = document.getElementById('progress-bar');
+    if (progressBar) {
+        progressBar.style.display = 'block';
+    }
+    
     try {
         const response = await fetch(API_ENDPOINT);
         if (!response.ok) {
@@ -92,7 +101,43 @@ export async function fetchAndMergeApiData(): Promise<void> {
     } catch (error) {
         console.error('Error fetching API data:', error);
         showNotification('Failed to fetch new data. Please try again.', 'error');
+    } finally {
+        // Hide progress bar
+        if (progressBar) {
+            progressBar.style.display = 'none';
+        }
+        
+        // Update last check time
+        lastApiCheckTime = new Date();
+        updateLastCheckTime();
     }
+}
+
+// Function to update the last check time display
+function updateLastCheckTime(): void {
+    const lastCheckElement = document.getElementById('last-check');
+    if (lastCheckElement && lastApiCheckTime) {
+        lastCheckElement.textContent = lastApiCheckTime.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        }) + ' at ' + lastApiCheckTime.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+    }
+}
+
+// Function to start automatic refresh every 10 minutes
+export function startAutomaticRefresh(): void {
+    // Initial fetch
+    fetchAndMergeApiData();
+    
+    // Set up interval for every 10 minutes (600,000 ms)
+    setInterval(() => {
+        fetchAndMergeApiData();
+    }, 600000);
 }
 
 // Function to trigger chart updates
