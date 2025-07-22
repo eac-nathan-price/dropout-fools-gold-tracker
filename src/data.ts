@@ -30,7 +30,7 @@ type ApiResponse = {
 };
 
 // Check if running on localhost for debug mode
-export const isDebug = false && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+export const isDebug = true && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
 // Track last API check time
 let lastApiCheckTime: Date | null = null;
@@ -115,6 +115,41 @@ if (cached && getLatestTime(cached) > getLatestTime(rawViewData)) {
 }
 export { viewData };
 
+// --- Dirty/Clean Data Logic for Even Hour (PST) ---
+function getPSTDate(date = new Date()) {
+    // Returns a Date object in PST (UTC-8 or UTC-7 for DST)
+    // This works for US Pacific Time, including DST
+    const utc = date.getTime() + (date.getTimezoneOffset() * 60000);
+    // PST is UTC-8, PDT is UTC-7
+    // Use US daylight saving rules: second Sunday in March to first Sunday in November
+    const year = date.getFullYear();
+    const startDST = new Date(Date.UTC(year, 2, 8, 10)); // 2nd Sunday in March, 2am PST = 10am UTC
+    startDST.setDate(8 + (7 - startDST.getUTCDay()) % 7);
+    const endDST = new Date(Date.UTC(year, 10, 1, 9)); // 1st Sunday in Nov, 2am PDT = 9am UTC
+    endDST.setDate(1 + (7 - endDST.getUTCDay()) % 7);
+    const isDST = date >= startDST && date < endDST;
+    const offset = isDST ? -7 : -8;
+    return new Date(utc + offset * 3600000);
+}
+
+function getLatestEvenHourPST(now = new Date()) {
+    const pst = getPSTDate(now);
+    pst.setMinutes(0, 0, 0);
+    if (pst.getHours() % 2 !== 0) pst.setHours(pst.getHours() - 1); // go to previous even hour
+    return new Date(pst);
+}
+
+function isDataDirty(): boolean {
+    const latestDataTime = getLatestTime(viewData);
+    const latestEvenHour = getLatestEvenHourPST();
+    return latestDataTime < latestEvenHour;
+}
+
+function markDataClean() {
+    // No-op: data is clean if latest timestamp >= latest even hour
+    // This is just for clarity
+}
+
 // --- API Throttling and Refresh Logic ---
 let refreshInterval: number | null = null;
 let refreshTimeout: number | null = null;
@@ -123,7 +158,7 @@ let refreshTimeout: number | null = null;
 function maybeShowInitialCacheToast() {
     const lastReq = getLastApiRequestTime();
     const now = new Date();
-    if (lastReq && (now.getTime() - lastReq.getTime()) < 600000) {
+    if (lastReq && (now.getTime() - lastReq.getTime()) < 300000) {
         // Request will be throttled
         if (usedCache) {
             showNotification('Data updated from cache', 'success');
@@ -135,10 +170,26 @@ function maybeShowInitialCacheToast() {
 
 // --- API Fetch and Merge ---
 export async function fetchAndMergeApiData(): Promise<void> {
+    // Only request if data is dirty
+    if (!isDataDirty()) {
+        // Data is not dirty: flash progress bar, update last checked time, show notification
+        const progressBar = document.getElementById('progress-bar');
+        if (progressBar) progressBar.style.display = 'block';
+        setTimeout(() => {
+            if (progressBar) progressBar.style.display = 'none';
+            setTimeout(() => {
+                showNotification('No new data available', 'success');
+            }, 500);
+        }, 500);
+        setLastApiRequestTime(new Date());
+        lastApiCheckTime = new Date();
+        updateLastCheckTime();
+        return;
+    }
     // Prevent double fetches if called too soon
     const lastReq = getLastApiRequestTime();
     const now = new Date();
-    if (lastReq && (now.getTime() - lastReq.getTime()) < 600000) {
+    if (lastReq && (now.getTime() - lastReq.getTime()) < 300000) {
         // Too soon, skip
         return;
     }
@@ -148,6 +199,7 @@ export async function fetchAndMergeApiData(): Promise<void> {
     if (progressBar) {
         progressBar.style.display = 'block';
     }
+    let gotNewData = false;
     try {
         const response = await fetch(API_ENDPOINT);
         if (!response.ok) {
@@ -168,6 +220,7 @@ export async function fetchAndMergeApiData(): Promise<void> {
         });
         if (newTimes.length === 0) {
             showNotification('No new data available', 'success');
+            // Data remains dirty
             return;
         }
         // Append new times to existing data
@@ -185,12 +238,16 @@ export async function fetchAndMergeApiData(): Promise<void> {
         // Save updated data to localStorage
         saveCachedViewData(viewData);
         setLastApiRequestTime(new Date());
+        gotNewData = true;
         // Trigger chart updates
         triggerChartUpdates();
         showNotification(`Successfully updated with ${newTimes.length} new data points`, 'success');
+        // Data is now clean
+        markDataClean();
     } catch (error) {
         console.error('Error fetching API data:', error);
         showNotification('Failed to fetch new data. Please try again.', 'error');
+        // Data remains dirty
     } finally {
         if (progressBar) {
             progressBar.style.display = 'none';
@@ -200,57 +257,46 @@ export async function fetchAndMergeApiData(): Promise<void> {
     }
 }
 
-function scheduleNextApiFetch(ms: number) {
-    if (refreshTimeout) clearTimeout(refreshTimeout);
-    refreshTimeout = window.setTimeout(() => {
-        fetchAndMergeApiData();
-        refreshInterval = window.setInterval(fetchAndMergeApiData, 600000);
-    }, ms);
-}
-
 export function startAutomaticRefresh(): void {
     // Determine when to fetch next
     const lastReq = getLastApiRequestTime();
     const now = new Date();
     if (!lastReq) {
-        // First visit: fetch now, then every 10min
+        // First visit: fetch now, then every 5min
         fetchAndMergeApiData();
-        refreshInterval = window.setInterval(fetchAndMergeApiData, 600000);
+        refreshInterval = window.setInterval(fetchAndMergeApiData, 300000);
     } else {
         const elapsed = now.getTime() - lastReq.getTime();
-        if (elapsed >= 600000) {
-            // >10min: fetch now, then every 10min
+        if (elapsed >= 300000) {
+            // >5min: fetch now, then every 5min
             fetchAndMergeApiData();
-            refreshInterval = window.setInterval(fetchAndMergeApiData, 600000);
+            refreshInterval = window.setInterval(fetchAndMergeApiData, 300000);
         } else {
-            // <10min: schedule fetch for (10min-elapsed), then every 10min
-            scheduleNextApiFetch(600000 - elapsed);
+            // <5min: schedule fetch for (5min-elapsed), then every 5min
+            scheduleNextApiFetch(300000 - elapsed);
             maybeShowInitialCacheToast();
         }
     }
 }
 
+function scheduleNextApiFetch(ms: number) {
+    if (refreshTimeout) clearTimeout(refreshTimeout);
+    refreshTimeout = window.setTimeout(() => {
+        fetchAndMergeApiData();
+        refreshInterval = window.setInterval(fetchAndMergeApiData, 300000);
+    }, ms);
+}
+
 // Function to manually refresh data
 export async function manualRefresh(): Promise<void> {
-    // Return immediately if it's been fewer than 30 seconds since last check
-    if (lastApiCheckTime && (Date.now() - lastApiCheckTime.getTime()) < 30000) {
-        console.log('Manual refresh blocked: too soon since last API check');
-        return;
-    }
-    
-    // Clear existing refresh interval
+    // Use the same logic as fetchAndMergeApiData
+    await fetchAndMergeApiData();
+    // Reset interval
     if (refreshInterval) {
         clearInterval(refreshInterval);
         refreshInterval = null;
     }
-    
-    // Fetch new data
-    await fetchAndMergeApiData();
-    
-    // Start new interval 10 minutes from now
-    refreshInterval = window.setInterval(() => {
-        fetchAndMergeApiData();
-    }, 600000);
+    refreshInterval = window.setInterval(fetchAndMergeApiData, 300000);
 }
 
 // Function to simulate API error for debugging
