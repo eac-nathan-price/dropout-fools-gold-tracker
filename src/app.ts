@@ -604,14 +604,28 @@ class ProducerTracker {
         };
 
         const customTooltipLabel = (context: any) => {
-            const videoIndex = costPerViewData.findIndex(item => item.costPerView === context.parsed.x);
+            return `${context.parsed.x.toFixed(2)}¢ per view`;
+        };
+
+        const customTooltipTitle = (context: any) => {
+            const videoIndex = costPerViewData.findIndex(item => item.costPerView === context[0].parsed.x);
+            const video = costPerViewData[videoIndex]?.video;
+            return video ? video.title : '';
+        };
+
+        const customTooltipAfterTitle = (context: any) => {
+            return '';
+        };
+
+        const customTooltipBeforeBody = (context: any) => {
+            const videoIndex = costPerViewData.findIndex(item => item.costPerView === context[0].parsed.x);
             const video = costPerViewData[videoIndex]?.video;
             if (video) {
                 const totalViews = getLatestPlatformViews(video)[this.currentVideoPlatform];
                 const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0);
-                return `${video.title}: ${context.parsed.x.toFixed(2)}¢ per view ($${totalContribution.toFixed(2)} / ${formatNumber(totalViews)} views)`;
+                return `$${totalContribution.toFixed(2)} / ${formatNumber(totalViews)} views`;
             }
-            return `${context.parsed.x.toFixed(2)}¢ per view`;
+            return '';
         };
 
         this.costPerViewChart = new Chart(ctx, {
@@ -685,6 +699,9 @@ class ProducerTracker {
                         borderColor: '#ffd700',
                         borderWidth: 1,
                         callbacks: {
+                            title: customTooltipTitle,
+                            afterTitle: customTooltipAfterTitle,
+                            beforeBody: customTooltipBeforeBody,
                             label: customTooltipLabel
                         }
                     }
