@@ -19,6 +19,7 @@ export class DataService {
     private isInitialized = false;
     private initPromise: Promise<void> | null = null;
     private lastSuccessfulApiRequest: Date | null = null;
+    private onDataUpdateCallbacks: (() => void)[] = [];
 
     private constructor() {
         // Initialize with local data as fallback
@@ -39,9 +40,11 @@ export class DataService {
         if (this.isInitialized) return;
         if (this.initPromise) return this.initPromise;
 
-        this.initPromise = this.fetchRealTimeData();
-        await this.initPromise;
+        // Mark as initialized immediately so local data shows right away
         this.isInitialized = true;
+        
+        // Start API request in background (don't await it)
+        this.initPromise = this.fetchRealTimeData();
     }
 
     private async fetchRealTimeData(): Promise<void> {
@@ -119,6 +122,9 @@ export class DataService {
             this.lastSuccessfulApiRequest = new Date();
 
             console.log('Successfully updated data with real-time information');
+            
+            // Notify listeners that data has been updated
+            this.notifyDataUpdate();
         } catch (error) {
             console.warn('Error fetching real-time data, using local fallback:', error);
         } finally {
@@ -164,6 +170,14 @@ export class DataService {
 
     isDataInitialized(): boolean {
         return this.isInitialized;
+    }
+
+    onDataUpdate(callback: () => void): void {
+        this.onDataUpdateCallbacks.push(callback);
+    }
+
+    private notifyDataUpdate(): void {
+        this.onDataUpdateCallbacks.forEach(callback => callback());
     }
 
     async testApiConnectivity(): Promise<boolean> {

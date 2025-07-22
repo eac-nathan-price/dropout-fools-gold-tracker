@@ -578,6 +578,11 @@ class ProducerTracker {
         await dataService.refreshData();
         
         // Update all charts and UI components
+        this.refreshUI();
+    }
+
+    refreshUI() {
+        // Update all charts and UI components without calling API
         this.updateLastUpdated();
         this.renderProducerComparisonChart();
         this.renderCombinedVideoChart();
@@ -588,12 +593,17 @@ class ProducerTracker {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', async () => {
-    // Initialize data service first
+    // Initialize data service first (shows local data immediately)
     const dataService = DataService.getInstance();
-    await dataService.initialize();
+    dataService.initialize(); // Don't await - let it run in background
     
-    // Then initialize the UI
+    // Initialize the UI immediately with local data
     const tracker = new ProducerTracker();
+    
+    // Register callback to update UI when API data arrives
+    dataService.onDataUpdate(() => {
+        tracker.refreshUI();
+    });
     
     // Set up periodic refresh every 30 minutes
     setInterval(async () => {
