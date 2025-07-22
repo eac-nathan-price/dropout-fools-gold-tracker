@@ -15,7 +15,8 @@ import {
     CHART_DEFAULTS,
     populateProducerCardViews,
     EXTENDED_PLATFORMS,
-    PLATFORMS
+    PLATFORMS,
+    fetchAndMergeApiData
 } from './data.js';
 
 // Template utility class
@@ -223,6 +224,29 @@ class ProducerTracker {
         this.renderCombinedVideoChart();
         this.renderVideoCharts();
         this.renderProducerStats();
+        
+        // Fetch and merge API data on startup
+        this.fetchAndUpdateData();
+    }
+
+    // Method to fetch and update data from API
+    async fetchAndUpdateData() {
+        const refreshButton = document.getElementById('refresh-data-btn') as HTMLButtonElement;
+        if (refreshButton) {
+            refreshButton.disabled = true;
+            refreshButton.textContent = '⏳ Updating...';
+        }
+        
+        try {
+            await fetchAndMergeApiData();
+        } catch (error) {
+            console.error('Failed to fetch API data:', error);
+        } finally {
+            if (refreshButton) {
+                refreshButton.disabled = false;
+                refreshButton.textContent = '🔄 Refresh Data';
+            }
+        }
     }
 
     setupEventListeners() {
@@ -254,6 +278,28 @@ class ProducerTracker {
                 }
             });
         });
+
+        // Listen for data updates from API
+        window.addEventListener('viewDataUpdated', () => {
+            this.refreshAllCharts();
+            this.updateLastUpdated();
+        });
+
+        // Add refresh button event listener
+        const refreshButton = document.getElementById('refresh-data-btn');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', () => {
+                this.fetchAndUpdateData();
+            });
+        }
+    }
+
+    // Method to refresh all charts when new data is available
+    refreshAllCharts() {
+        this.renderProducerComparisonChart();
+        this.renderCombinedVideoChart();
+        this.renderVideoCharts();
+        this.renderProducerStats();
     }
 
     renderProducerComparisonChart() {
@@ -585,4 +631,4 @@ class ProducerTracker {
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     new ProducerTracker();
-}); 
+});

@@ -1,4 +1,161 @@
 import rawViews from './views.json' with { type: "json" };
+
+// API endpoint for fetching view data
+const API_ENDPOINT = 'https://fg-api-server-746154731592.us-west1.run.app/viewcounts/flattened';
+
+// Mapping from API response keys to views.json keys
+const API_KEY_MAPPING: { [key: string]: string } = {
+    'peel_robalino': 'peel-robalino',
+    'annas_king_for_a_day': 'annas-king',
+    'katies_d20_on_a_bus': 'katies-d20',
+    'erikas_haircut': 'erikas-haircut',
+    'sephies_sexy_car_wash': 'sephies-car-wash',
+    'grants_crack': 'grants-crack',
+    'jonnys_human_puppy_bowl': 'jonnys-puppy-bowl',
+    'lily_and_izzys_milk_taste_test': 'lily-izzys-milk',
+    'izzys_buttholes': 'izzys-buttholes',
+    'vics_brennans_exit_video': 'vics-brennans-exit'
+};
+
+// Type for API response
+type ApiResponse = {
+    times: string[];
+    videos: {
+        [key: string]: {
+            youtube: number[];
+            tiktok: number[];
+            instagram: number[];
+        };
+    };
+};
+
+// Function to fetch and merge API data
+export async function fetchAndMergeApiData(): Promise<void> {
+    try {
+        const response = await fetch(API_ENDPOINT);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const apiData: ApiResponse = await response.json();
+        
+        console.log('API Response:', apiData);
+        
+        // Get the most recent timestamp from existing data
+        const lastExistingTime = new Date(Math.max(...viewData.times.map(t => t.getTime())));
+        console.log('Last existing time:', lastExistingTime);
+        
+        // Filter API times to only include those after the last existing time
+        const newTimes: Date[] = [];
+        const timeIndices: number[] = [];
+        
+        apiData.times.forEach((timeStr, index) => {
+            const apiTime = new Date(timeStr);
+            if (apiTime > lastExistingTime) {
+                newTimes.push(apiTime);
+                timeIndices.push(index);
+            }
+        });
+        
+        console.log('New times found:', newTimes.length);
+        console.log('New times:', newTimes);
+        
+        if (newTimes.length === 0) {
+            console.log('No new data to append');
+            showNotification('No new data available', 'success');
+            return;
+        }
+        
+        // Append new times to existing data
+        viewData.times.push(...newTimes);
+        
+        // Append new view data for each video
+        Object.entries(apiData.videos).forEach(([apiKey, platformData]) => {
+            const viewsKey = API_KEY_MAPPING[apiKey];
+            if (viewsKey && viewData.videos[viewsKey]) {
+                // Append new data for each platform
+                Object.entries(platformData).forEach(([platform, values]) => {
+                    const newValues = timeIndices.map(index => values[index]);
+                    viewData.videos[viewsKey][platform as keyof typeof platformData].push(...newValues);
+                });
+            }
+        });
+        
+        console.log(`Appended ${newTimes.length} new data points`);
+        
+        // Trigger chart updates
+        triggerChartUpdates();
+        
+        // Show success message
+        showNotification(`Successfully updated with ${newTimes.length} new data points`, 'success');
+        
+    } catch (error) {
+        console.error('Error fetching API data:', error);
+        showNotification('Failed to fetch new data. Please try again.', 'error');
+    }
+}
+
+// Function to trigger chart updates
+function triggerChartUpdates(): void {
+    // Dispatch a custom event that the chart components can listen to
+    window.dispatchEvent(new CustomEvent('viewDataUpdated'));
+}
+
+// Function to show notifications
+function showNotification(message: string, type: 'success' | 'error'): void {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.textContent = message;
+    
+    // Add styles
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 20px;
+        border-radius: 8px;
+        color: white;
+        font-weight: 600;
+        z-index: 1000;
+        animation: slideIn 0.3s ease-out;
+        ${type === 'success' ? 'background: linear-gradient(135deg, #10b981, #059669);' : 'background: linear-gradient(135deg, #ef4444, #dc2626);'}
+    `;
+    
+    // Add animation styles
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    `;
+    document.head.appendChild(style);
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease-in';
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 300);
+    }, 3000);
+    
+    // Add slideOut animation
+    const slideOutStyle = document.createElement('style');
+    slideOutStyle.textContent = `
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
+        }
+    `;
+    document.head.appendChild(slideOutStyle);
+}
+
 export const viewData: ViewData = {
     times: rawViews.times.map(time => new Date(time)),
     videos: rawViews.videos

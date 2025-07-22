@@ -755,6 +755,37 @@ body {
     font-size: 0.9rem;
 }
 
+.refresh-button {
+    background: linear-gradient(135deg, #ffd700, #ffed4e);
+    color: #333;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 10px;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.refresh-button:hover {
+    background: linear-gradient(135deg, #ffed4e, #ffd700);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+.refresh-button:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(255, 215, 0, 0.3);
+}
+
+.refresh-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
 /* Loading animation */
 .loading {
     text-align: center;
