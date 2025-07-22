@@ -229,6 +229,7 @@ class ProducerTracker {
     currentVideoPlatform: ExtendedPlatform;
     producerChart: ChartType<'line', { x: Datelike; y: number; }[], unknown> | null;
     combinedVideoChart: ChartType<'line', { x: Datelike; y: number; }[], unknown> | null;
+    costPerViewChart: ChartType<'bar', number[], string> | null;
     videoCharts: Map<string, ChartType<'line', { x: Datelike; y: number; }[], unknown>>;
 
     constructor() {
@@ -236,6 +237,7 @@ class ProducerTracker {
         this.currentVideoPlatform = 'all';
         this.producerChart = null;
         this.combinedVideoChart = null;
+        this.costPerViewChart = null;
         this.videoCharts = new Map();
         this.init();
     }
@@ -245,6 +247,7 @@ class ProducerTracker {
         this.updateLastUpdated();
         this.renderProducerComparisonChart();
         this.renderCombinedVideoChart();
+        this.renderCostPerViewChart();
         this.renderVideoCharts();
         this.renderProducerStats();
         
@@ -269,6 +272,7 @@ class ProducerTracker {
                 const target = e.target as HTMLSelectElement;
                 this.currentVideoPlatform = target.value as ExtendedPlatform;
                 this.updateCombinedVideoChartForFilter();
+                this.updateCostPerViewChartForFilter();
             });
         }
 
@@ -340,6 +344,7 @@ class ProducerTracker {
     refreshAllCharts() {
         this.updateProducerComparisonChart();
         this.updateCombinedVideoChart();
+        this.updateCostPerViewChart();
         this.updateVideoCharts();
         this.renderProducerStats();
     }
@@ -458,8 +463,58 @@ class ProducerTracker {
             type: 'line',
             data: { datasets },
             options: {
-                ...ChartManager.getChartOptions(true, customTooltipLabel),
-                scales: CHART_DEFAULTS.scales
+                ...CHART_DEFAULTS.base,
+                scales: {
+                    ...CHART_DEFAULTS.scales,
+                    x: {
+                        ...CHART_DEFAULTS.scales.x,
+                        title: {
+                            display: true,
+                            text: 'Time',
+                            color: '#cccccc',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    },
+                    y: {
+                        ...CHART_DEFAULTS.scales.y,
+                        title: {
+                            display: true,
+                            text: 'Views',
+                            color: '#cccccc',
+                            font: {
+                                size: 12
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Views',
+                        color: '#ffffff',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 20
+                        }
+                    },
+                    legend: {
+                        ...CHART_DEFAULTS.legend,
+                        display: true
+                    },
+                    tooltip: {
+                        ...CHART_DEFAULTS.tooltip,
+                        callbacks: {
+                            ...CHART_DEFAULTS.tooltip.callbacks,
+                            label: customTooltipLabel
+                        }
+                    }
+                }
             }
         });
     }
@@ -506,6 +561,150 @@ class ProducerTracker {
         });
         
         this.combinedVideoChart.update();
+    }
+
+    renderCostPerViewChart() {
+        const ctx = document.getElementById('cost-per-view-chart') as HTMLCanvasElement | null;
+        if (!ctx) return;
+        
+        // Destroy existing chart if it exists
+        if (this.costPerViewChart) {
+            this.costPerViewChart.destroy();
+            this.costPerViewChart = null;
+        }
+        
+        // Generate distinct colors for each video (same as combined video chart)
+        const videoColors = videoData.map((_, index) => {
+            const hue = (index * 360) / videoData.length;
+            return `hsl(${hue}, 70%, 60%)`;
+        });
+
+        // Calculate cost per view for each video
+        const costPerViewData = videoData.map((video, index) => {
+            const totalViews = getLatestPlatformViews(video)[this.currentVideoPlatform];
+            const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0);
+            const costPerView = totalContribution > 0 && totalViews > 0 ? (totalContribution / totalViews) * 100 : 0; // Convert to cents
+            return {
+                video,
+                costPerView,
+                color: videoColors[index]
+            };
+        });
+
+        // Sort by cost per view (lowest to highest)
+        costPerViewData.sort((a, b) => a.costPerView - b.costPerView);
+
+        const dataset = {
+            label: 'Cost Per View (cents)',
+            data: costPerViewData.map(item => item.costPerView),
+            backgroundColor: costPerViewData.map(item => item.color),
+            borderColor: costPerViewData.map(item => item.color),
+            borderWidth: 1,
+            borderRadius: 4
+        };
+
+        const customTooltipLabel = (context: any) => {
+            const videoIndex = costPerViewData.findIndex(item => item.costPerView === context.parsed.x);
+            const video = costPerViewData[videoIndex]?.video;
+            if (video) {
+                const totalViews = getLatestPlatformViews(video)[this.currentVideoPlatform];
+                const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0);
+                return `${video.title}: ${context.parsed.x.toFixed(2)}¢ per view ($${totalContribution.toFixed(2)} / ${formatNumber(totalViews)} views)`;
+            }
+            return `${context.parsed.x.toFixed(2)}¢ per view`;
+        };
+
+        this.costPerViewChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: costPerViewData.map(item => item.video.title),
+                datasets: [dataset]
+            },
+            options: {
+                indexAxis: 'y', // Horizontal bar chart
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Cents',
+                            color: '#cccccc',
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#333333'
+                        },
+                        ticks: {
+                            color: '#cccccc'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Videos',
+                            color: '#cccccc',
+                            font: {
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#333333'
+                        },
+                        ticks: {
+                            color: '#cccccc'
+                        }
+                    }
+                },
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Cost Per View',
+                        color: '#ffffff',
+                        font: {
+                            size: 16,
+                            weight: 'bold'
+                        },
+                        padding: {
+                            top: 10,
+                            bottom: 20
+                        }
+                    },
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false,
+                        backgroundColor: '#2d2d2d',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                        borderColor: '#ffd700',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: customTooltipLabel
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    updateCostPerViewChart() {
+        if (!this.costPerViewChart) {
+            this.renderCostPerViewChart();
+            return;
+        }
+        // For cost per view chart, we need to re-render when data changes
+        this.renderCostPerViewChart();
+    }
+
+    updateCostPerViewChartForFilter() {
+        // Re-render the chart when platform filter changes
+        this.renderCostPerViewChart();
     }
 
     renderProducerStats() {

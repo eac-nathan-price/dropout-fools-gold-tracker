@@ -81,6 +81,14 @@ body {
     margin-bottom: 40px;
 }
 
+/* Charts Container for stacked layout */
+.charts-container {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+    margin-top: 20px;
+}
+
 .chart-card {
     background: #1a1a1a;
     border-radius: 20px;
