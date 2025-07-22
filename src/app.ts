@@ -596,10 +596,23 @@ class ProducerTracker {
                 this.showYouTubePlayer(video.links.youtube, video.title);
             });
         }
-        const totalViewsElement = container.querySelector('.total-views-display');
-        if (totalViewsElement) totalViewsElement.textContent = formatNumber(getLatestPlatformViews(video).all);
+        
+        // Calculate cost per view for tooltips
+        const totalViews = getLatestPlatformViews(video).all;
+        const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0);
+        const costPerView = totalContribution > 0 ? totalContribution / totalViews : 0;
+        const costPerViewCents = costPerView * 100; // Convert to cents
+        const costPerViewFormatted = costPerView > 0 ? `${costPerViewCents.toFixed(2)}¢ per view` : 'No cost data';
+        
+        // Set total views with tooltip
+        const totalViewsElement = container.querySelector('.total-views-display') as HTMLElement;
+        if (totalViewsElement) {
+            totalViewsElement.textContent = formatNumber(totalViews);
+            totalViewsElement.title = costPerViewFormatted;
+        }
+        
         this.setPlatformLinks(container, video);
-        this.setContributionInfo(container, video);
+        this.setContributionInfo(container, video, costPerViewFormatted);
         this.setPerformanceIndicators(container, video);
         this.setCanvasId(container, video);
         this.setProducerBubbles(container, video);
@@ -613,10 +626,15 @@ class ProducerTracker {
         }
     }
 
-    private setContributionInfo(container: HTMLElement, video: Video): void {
+    private setContributionInfo(container: HTMLElement, video: Video, costPerViewTooltip?: string): void {
         const totalContribution = Object.values(video.contributions).reduce((sum, amount) => sum + amount, 0).toLocaleString();
-        const contributionElement = container.querySelector('.total-contribution');
-        if (contributionElement) contributionElement.textContent = `$${totalContribution}`;
+        const contributionElement = container.querySelector('.total-contribution') as HTMLElement;
+        if (contributionElement) {
+            contributionElement.textContent = `$${totalContribution}`;
+            if (costPerViewTooltip) {
+                contributionElement.title = costPerViewTooltip;
+            }
+        }
     }
 
     private setPerformanceIndicators(container: HTMLElement, video: Video): void {
