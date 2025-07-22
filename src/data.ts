@@ -80,7 +80,7 @@ export class DataService {
                 return;
             }
 
-            // Video ID mapping from API format to our format
+            // Video ID mapping from API format to our format (updated for new API keys)
             const videoIdMapping: { [key: string]: string } = {
                 'peel_robalino': 'peel-robalino',
                 'annas_king_for_a_day': 'annas-king',
@@ -94,29 +94,49 @@ export class DataService {
                 'vics_brennans_exit_video': 'vics-brennans-exit'
             };
 
-            // Transform API data to match our format
+            const apiTimes = apiData.times.map(time => new Date(time));
+            const numTimestamps = apiTimes.length;
+
             const transformedVideos: { [videoId: string]: PlatformData<number[]> } = {};
-            
-            // Transform each video's data
             Object.entries(apiData.videos).forEach(([apiVideoId, videoData]) => {
                 const videoId = videoIdMapping[apiVideoId];
                 if (!videoId) {
                     console.warn(`Unknown video ID from API: ${apiVideoId}`);
                     return;
                 }
-
+                // Always use the last N values, where N = number of timestamps
                 transformedVideos[videoId] = {
-                    youtube: videoData.youtube,
-                    tiktok: videoData.tiktok,
-                    instagram: videoData.instagram
+                    youtube: videoData.youtube.slice(-numTimestamps),
+                    tiktok: videoData.tiktok.slice(-numTimestamps),
+                    instagram: videoData.instagram.slice(-numTimestamps)
                 };
             });
 
-            // Update the data with the complete time series from API
             this.currentData = {
-                times: apiData.times.map(time => new Date(time)),
+                times: apiTimes,
                 videos: transformedVideos
             };
+
+            // Debug: Compare video keys after API load
+            // @ts-ignore
+            import('./data').then(module => {
+                const videoData = module.videoData || [];
+                const apiKeys = Object.keys(transformedVideos);
+                const metaIds = videoData.map((v: any) => v.id);
+                console.log('API video keys:', apiKeys);
+                console.log('videoData IDs:', metaIds);
+                const missingInApi = metaIds.filter((id: string) => !apiKeys.includes(id));
+                const extraInApi = apiKeys.filter((id: string) => !metaIds.includes(id));
+                if (missingInApi.length > 0) {
+                    console.warn('IDs in videoData but missing in API data:', missingInApi);
+                }
+                if (extraInApi.length > 0) {
+                    console.warn('IDs in API data but not in videoData:', extraInApi);
+                }
+                if (missingInApi.length === 0 && extraInApi.length === 0) {
+                    console.log('✅ API video keys and videoData IDs match.');
+                }
+            });
 
             // Track successful API request
             this.lastSuccessfulApiRequest = new Date();
