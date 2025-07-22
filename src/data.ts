@@ -30,7 +30,7 @@ type ApiResponse = {
 };
 
 // Check if running on localhost for debug mode
-export const isDebug = true && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+export const isDebug = false && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
 
 // Track last API check time
 let lastApiCheckTime: Date | null = null;
@@ -112,6 +112,11 @@ let usedCache = false;
 if (cached && getLatestTime(cached) > getLatestTime(rawViewData)) {
     viewData = cached;
     usedCache = true;
+    const lastUpdate = getLatestTime(viewData);
+    const nextEvenHour = getNextEvenHourPST(lastUpdate);
+    const now = new Date();
+    const nextCheck = new Date(now.getTime() + 300000);
+    console.log(`[Initial Load] Data loaded from cache. Last update time: ${lastUpdate.toLocaleString()}. Next even hour (PST) update: ${nextEvenHour.toLocaleString()}. Next update check: ${nextCheck.toLocaleString()}`);
 }
 export { viewData };
 
@@ -140,6 +145,9 @@ function getLatestEvenHourPST(now = new Date()) {
 }
 
 function isDataDirty(): boolean {
+    if (typeof window !== 'undefined' && typeof window._forceDirtyOverride !== 'undefined') {
+        return !!window._forceDirtyOverride;
+    }
     const latestDataTime = getLatestTime(viewData);
     const latestEvenHour = getLatestEvenHourPST();
     return latestDataTime < latestEvenHour;
@@ -169,28 +177,51 @@ function maybeShowInitialCacheToast() {
 }
 
 // --- API Fetch and Merge ---
-export async function fetchAndMergeApiData(): Promise<void> {
-    // Only request if data is dirty
-    if (!isDataDirty()) {
-        // Data is not dirty: flash progress bar, update last checked time, show notification
+// Accept a forceManual parameter to always allow manual refresh to make a request if forced dirty
+export async function fetchAndMergeApiData(forceManual = false): Promise<void> {
+    // If force clean, skip request and show fake progress/notification
+    if (typeof window !== 'undefined' && window._forceDirtyOverride === false) {
+        const now = new Date();
+        const nextCheck = new Date(now.getTime() + 300000);
+        console.log(`[Update Check] Data is NOT dirty (forced clean) at ${now.toLocaleString()}. Next check at ${nextCheck.toLocaleString()}`);
         const progressBar = document.getElementById('progress-bar');
         if (progressBar) progressBar.style.display = 'block';
+        const fakeDelay = 400 + Math.random() * 400; // 0.4s to 0.8s
         setTimeout(() => {
             if (progressBar) progressBar.style.display = 'none';
-            setTimeout(() => {
-                showNotification('No new data available', 'success');
-            }, 500);
-        }, 500);
-        setLastApiRequestTime(new Date());
-        lastApiCheckTime = new Date();
+            showNotification('No new data available', 'success');
+        }, fakeDelay);
+        setLastApiRequestTime(now);
+        lastApiCheckTime = now;
         updateLastCheckTime();
         return;
     }
-    // Prevent double fetches if called too soon
+    // If force dirty, always make a real API request (fall through)
+    // Only skip request if not dirty and no override
+    if (!(typeof window !== 'undefined' && window._forceDirtyOverride === true)) {
+        if (!isDataDirty()) {
+            // Data is not dirty: flash progress bar, update last checked time, show notification
+            const now = new Date();
+            const nextCheck = new Date(now.getTime() + 300000);
+            console.log(`[Update Check] Data is NOT dirty at ${now.toLocaleString()}. Next check at ${nextCheck.toLocaleString()}`);
+            const progressBar = document.getElementById('progress-bar');
+            if (progressBar) progressBar.style.display = 'block';
+            setTimeout(() => {
+                if (progressBar) progressBar.style.display = 'none';
+                showNotification('No new data available', 'success');
+            }, 500);
+            setLastApiRequestTime(now);
+            lastApiCheckTime = now;
+            updateLastCheckTime();
+            return;
+        }
+    }
+    // Prevent double fetches if called too soon, unless manual or forced dirty
     const lastReq = getLastApiRequestTime();
     const now = new Date();
-    if (lastReq && (now.getTime() - lastReq.getTime()) < 300000) {
-        // Too soon, skip
+    const isForceDirty = typeof window !== 'undefined' && window._forceDirtyOverride === true;
+    if (!forceManual && !isForceDirty && lastReq && (now.getTime() - lastReq.getTime()) < 300000) {
+        // Too soon, skip (only for auto refresh)
         return;
     }
     setLastApiRequestTime(now);
@@ -201,6 +232,12 @@ export async function fetchAndMergeApiData(): Promise<void> {
     }
     let gotNewData = false;
     try {
+        const nextCheck = new Date(now.getTime() + 300000);
+        if (isForceDirty) {
+            console.log(`[Update Check] Data IS dirty (forced dirty) at ${now.toLocaleString()}. Next check at ${nextCheck.toLocaleString()}`);
+        } else {
+            console.log(`[Update Check] Data IS dirty at ${now.toLocaleString()}. Next check at ${nextCheck.toLocaleString()}`);
+        }
         const response = await fetch(API_ENDPOINT);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -289,8 +326,9 @@ function scheduleNextApiFetch(ms: number) {
 
 // Function to manually refresh data
 export async function manualRefresh(): Promise<void> {
+    console.log('[Manual Refresh] Manual refresh button clicked');
     // Use the same logic as fetchAndMergeApiData
-    await fetchAndMergeApiData();
+    await fetchAndMergeApiData(true);
     // Reset interval
     if (refreshInterval) {
         clearInterval(refreshInterval);
@@ -732,4 +770,18 @@ export function formatNumber(num: number): string {
 // Helper function to create an object from keys and a mapping function
 export function objectFromEntries<K extends string, T>(keys: K[], mapFn: (key: K) => T): Record<K, T> {
     return Object.fromEntries(keys.map(key => [key, mapFn(key)])) as Record<K, T>;
+}
+
+// Helper: get the next even hour (PST) strictly after a given date
+function getNextEvenHourPST(afterDate = new Date()) {
+    const pst = getPSTDate(afterDate);
+    pst.setMinutes(0, 0, 0);
+    let nextHour = pst.getHours();
+    if (nextHour % 2 === 0) {
+        nextHour += 2;
+    } else {
+        nextHour += 1;
+    }
+    pst.setHours(nextHour);
+    return pst;
 }

@@ -23,6 +23,13 @@ import {
     isDebug
 } from './data.js';
 
+// Add global declaration for debug override
+declare global {
+    interface Window {
+        _forceDirtyOverride?: boolean;
+    }
+}
+
 // Template utility class
 class TemplateManager {
     static getTemplate(templateId: string): HTMLTemplateElement {
@@ -807,5 +814,34 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     } catch {}
+
+    // Debug: Add force dirty/clean toggle button
+    if (isDebug) {
+        window._forceDirtyOverride = undefined;
+        const debugButtons = document.getElementById('debug-buttons');
+        if (debugButtons) {
+            const label = document.createElement('label');
+            label.style.display = 'flex';
+            label.style.alignItems = 'center';
+            label.style.gap = '0.5em';
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.style.marginRight = '0.5em';
+            checkbox.checked = false;
+            label.appendChild(checkbox);
+            label.appendChild(document.createTextNode('Force Data Dirty'));
+            checkbox.onchange = () => {
+                if (checkbox.checked) {
+                    window._forceDirtyOverride = true;
+                    console.log('[Debug] Force Data Dirty: ON');
+                } else {
+                    delete window._forceDirtyOverride;
+                    console.log('[Debug] Force Data Dirty: OFF (using normal logic)');
+                }
+            };
+            debugButtons.appendChild(label);
+        }
+    }
+
     new ProducerTracker();
 });
