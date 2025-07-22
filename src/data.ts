@@ -125,6 +125,9 @@ export class DataService {
             
             // Notify listeners that data has been updated
             this.notifyDataUpdate();
+            
+            // Debug: Compare API data with local views.json
+            this.debugCompareData(apiData);
         } catch (error) {
             console.warn('Error fetching real-time data, using local fallback:', error);
         } finally {
@@ -229,6 +232,101 @@ export class DataService {
         } catch (error) {
             console.log('Test 3 (server root): FAILED', error);
         }
+    }
+
+    // Debug method to compare API data with local views.json
+    private debugCompareData(apiData: FlattenedApiResponse): void {
+        console.log('🔍 DEBUG: Comparing API data with local views.json...');
+        
+        const localData = {
+            times: rawViews.times.map(time => new Date(time)),
+            videos: rawViews.videos
+        };
+        
+        const apiTimes = apiData.times.map(time => new Date(time));
+        
+        // Check for timestamps in views.json that aren't in API response
+        const missingTimestamps = localData.times.filter(localTime => 
+            !apiTimes.some(apiTime => apiTime.getTime() === localTime.getTime())
+        );
+        
+        if (missingTimestamps.length > 0) {
+            console.log('⚠️  Timestamps in views.json but NOT in API response:', missingTimestamps.map(t => t.toISOString()));
+        } else {
+            console.log('✅ All timestamps from views.json are present in API response');
+        }
+        
+        // Check for timestamps in API response that aren't in views.json
+        const newTimestamps = apiTimes.filter(apiTime => 
+            !localData.times.some(localTime => localTime.getTime() === apiTime.getTime())
+        );
+        
+        if (newTimestamps.length > 0) {
+            console.log('🆕 New timestamps in API response:', newTimestamps.map(t => t.toISOString()));
+        }
+        
+        // Find common timestamps to compare data
+        const commonTimestamps = localData.times.filter(localTime => 
+            apiTimes.some(apiTime => apiTime.getTime() === localTime.getTime())
+        );
+        
+        console.log(`📊 Found ${commonTimestamps.length} common timestamps to compare`);
+        
+        // Video ID mapping for comparison
+        const videoIdMapping: { [key: string]: string } = {
+            'peel_robalino': 'peel-robalino',
+            'annas_king_for_a_day': 'annas-king',
+            'katies_d20_on_a_bus': 'katies-d20',
+            'erikas_haircut': 'erikas-haircut',
+            'sephies_sexy_car_wash': 'sephies-car-wash',
+            'grants_crack': 'grants-crack',
+            'jonnys_human_puppy_bowl': 'jonnys-puppy-bowl',
+            'lily_and_izzys_milk_taste_test': 'lily-izzys-milk',
+            'izzys_buttholes': 'izzys-buttholes',
+            'vics_brennans_exit_video': 'vics-brennans-exit'
+        };
+        
+        // Compare data for each video at common timestamps
+        Object.entries(videoIdMapping).forEach(([apiVideoId, localVideoId]) => {
+            const apiVideoData = apiData.videos[apiVideoId as keyof typeof apiData.videos];
+            const localVideoData = localData.videos[localVideoId as keyof typeof localData.videos];
+            
+            if (!apiVideoData || !localVideoData) {
+                console.log(`❌ Missing data for video: ${localVideoId}`);
+                return;
+            }
+            
+            let hasDifferences = false;
+            
+            // Compare each common timestamp
+            commonTimestamps.forEach((timestamp, index) => {
+                const localIndex = localData.times.findIndex(t => t.getTime() === timestamp.getTime());
+                const apiIndex = apiTimes.findIndex(t => t.getTime() === timestamp.getTime());
+                
+                if (localIndex !== -1 && apiIndex !== -1) {
+                    const platforms: ('youtube' | 'tiktok' | 'instagram')[] = ['youtube', 'tiktok', 'instagram'];
+                    
+                    platforms.forEach(platform => {
+                        const localValue = localVideoData[platform][localIndex];
+                        const apiValue = apiVideoData[platform][apiIndex];
+                        
+                        if (localValue !== apiValue) {
+                            if (!hasDifferences) {
+                                console.log(`\n🔍 Differences found for video: ${localVideoId}`);
+                                hasDifferences = true;
+                            }
+                            console.log(`  ${timestamp.toISOString()} - ${platform}: local=${localValue}, api=${apiValue} (diff: ${apiValue - localValue})`);
+                        }
+                    });
+                }
+            });
+            
+            if (!hasDifferences) {
+                console.log(`✅ No differences found for video: ${localVideoId}`);
+            }
+        });
+        
+        console.log('🔍 DEBUG: Data comparison complete');
     }
 
     private showProgressBar(): void {
