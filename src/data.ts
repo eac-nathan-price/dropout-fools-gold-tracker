@@ -79,16 +79,16 @@ export class DataService {
 
             // Video ID mapping from API format to our format
             const videoIdMapping: { [key: string]: string } = {
-                'peel-robalino': 'peel-robalino',
-                'annas-king-for-a-day': 'annas-king',
-                'katies-d20-on-a-bus': 'katies-d20',
-                'erikas-haircut': 'erikas-haircut',
-                'sephies-sexy-car-wash': 'sephies-car-wash',
-                'grants-crack': 'grants-crack',
-                'jonnys-human-puppy-bowl': 'jonnys-puppy-bowl',
-                'lily-and-izzys-milk-taste-test': 'lily-izzys-milk',
-                'izzys-buttholes': 'izzys-buttholes',
-                'vics-brennans-exit-video': 'vics-brennans-exit'
+                'peel_robalino': 'peel-robalino',
+                'annas_king_for_a_day': 'annas-king',
+                'katies_d20_on_a_bus': 'katies-d20',
+                'erikas_haircut': 'erikas-haircut',
+                'sephies_sexy_car_wash': 'sephies-car-wash',
+                'grants_crack': 'grants-crack',
+                'jonnys_human_puppy_bowl': 'jonnys-puppy-bowl',
+                'lily_and_izzys_milk_taste_test': 'lily-izzys-milk',
+                'izzys_buttholes': 'izzys-buttholes',
+                'vics_brennans_exit_video': 'vics-brennans-exit'
             };
 
             // Transform API data to match our format
@@ -178,7 +178,42 @@ export class DataService {
             return response.ok;
         } catch (error) {
             console.log('API connectivity test failed:', error);
+            // Log more details about the error
+            if (error instanceof TypeError && error.message.includes('CORS')) {
+                console.log('This is a CORS error - the server needs to allow cross-origin requests');
+            }
             return false;
+        }
+    }
+
+    // Test method to help debug CORS issues
+    async debugApiAccess(): Promise<void> {
+        console.log('Testing API access...');
+        
+        // Test 1: Simple fetch without CORS mode
+        try {
+            const response1 = await fetch('https://fg-api-server-746154731592.us-west1.run.app/viewcounts/flattened');
+            console.log('Test 1 (no CORS mode):', response1.ok ? 'SUCCESS' : 'FAILED', response1.status);
+        } catch (error) {
+            console.log('Test 1 (no CORS mode): FAILED', error);
+        }
+        
+        // Test 2: With CORS mode
+        try {
+            const response2 = await fetch('https://fg-api-server-746154731592.us-west1.run.app/viewcounts/flattened', {
+                mode: 'cors'
+            });
+            console.log('Test 2 (with CORS mode):', response2.ok ? 'SUCCESS' : 'FAILED', response2.status);
+        } catch (error) {
+            console.log('Test 2 (with CORS mode): FAILED', error);
+        }
+        
+        // Test 3: Check if server responds at all
+        try {
+            const response3 = await fetch('https://fg-api-server-746154731592.us-west1.run.app/');
+            console.log('Test 3 (server root):', response3.ok ? 'SUCCESS' : 'FAILED', response3.status);
+        } catch (error) {
+            console.log('Test 3 (server root): FAILED', error);
         }
     }
 
@@ -199,6 +234,9 @@ export class DataService {
 
 // Initialize the data service
 const dataService = DataService.getInstance();
+
+// Expose debug method globally for testing
+(window as any).debugApiAccess = () => dataService.debugApiAccess();
 
 // Export the viewData with a getter that ensures initialization
 export const viewData: ViewData = new Proxy({} as ViewData, {
