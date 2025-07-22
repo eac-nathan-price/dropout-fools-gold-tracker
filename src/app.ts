@@ -60,11 +60,19 @@ class ChartManager {
     static getChartOptions(showLegend: boolean = true, customTooltipLabel?: (context: any) => string) {
         const tooltipCallbacks: any = { ...CHART_DEFAULTS.tooltip.callbacks };
         if (customTooltipLabel) tooltipCallbacks.label = customTooltipLabel;
+        
         return {
             ...CHART_DEFAULTS.base,
             plugins: {
                 legend: { ...CHART_DEFAULTS.legend, display: showLegend },
-                tooltip: { ...CHART_DEFAULTS.tooltip, callbacks: tooltipCallbacks }
+                tooltip: { 
+                    ...CHART_DEFAULTS.tooltip, 
+                    callbacks: tooltipCallbacks,
+                    itemSort: function(a: any, b: any) {
+                        // Sort by parsed y value (highest to lowest)
+                        return b.parsed.y - a.parsed.y;
+                    }
+                }
             },
             scales: CHART_DEFAULTS.scales
         };

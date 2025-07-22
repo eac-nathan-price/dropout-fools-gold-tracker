@@ -31,7 +31,7 @@ export const producers: { [id: string]: Producer } = {
         id: "sam",
         name: "Sam",
         fullName: "Sam Reich",
-        color: "#ff8c00" // Orange
+        color: "#e67e00" // Darker Orange
     }
 };
 
