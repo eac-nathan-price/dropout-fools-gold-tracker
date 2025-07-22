@@ -2,6 +2,10 @@
 import Chart from 'chart.js/auto';
 import type { Chart as ChartType, ChartConfiguration } from 'chart.js';
 import 'chartjs-adapter-date-fns';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+
+// Register the datalabels plugin
+Chart.register(ChartDataLabels);
 import {
     producers,
     videoData,
@@ -96,6 +100,9 @@ class ChartManager {
                         // Sort by parsed y value (highest to lowest)
                         return b.parsed.y - a.parsed.y;
                     }
+                },
+                datalabels: {
+                    display: false
                 }
             },
             scales: CHART_DEFAULTS.scales
@@ -513,6 +520,9 @@ class ProducerTracker {
                             ...CHART_DEFAULTS.tooltip.callbacks,
                             label: customTooltipLabel
                         }
+                    },
+                    datalabels: {
+                        display: false
                     }
                 }
             }
@@ -690,7 +700,7 @@ class ProducerTracker {
                     legend: {
                         display: false
                     },
-                    tooltip: {
+                                        tooltip: {
                         mode: 'index',
                         intersect: false,
                         backgroundColor: '#2d2d2d',
@@ -703,6 +713,20 @@ class ProducerTracker {
                             afterTitle: customTooltipAfterTitle,
                             beforeBody: customTooltipBeforeBody,
                             label: customTooltipLabel
+                        }
+                    },
+                    datalabels: {
+                        display: true,
+                        color: '#ffffff',
+                        anchor: 'end',
+                        align: 'right',
+                        offset: 8,
+                        font: {
+                            size: 12,
+                            weight: 'bold'
+                        },
+                        formatter: function(value: number) {
+                            return value.toFixed(2) + '¢';
                         }
                     }
                 }
