@@ -15,7 +15,8 @@ import {
     CHART_DEFAULTS,
     populateProducerCardViews,
     EXTENDED_PLATFORMS,
-    PLATFORMS
+    PLATFORMS,
+    DataService
 } from './data.js';
 
 // Template utility class
@@ -580,9 +581,31 @@ class ProducerTracker {
             });
         }
     }
+
+    async refreshData() {
+        const dataService = DataService.getInstance();
+        await dataService.refreshData();
+        
+        // Update all charts and UI components
+        this.updateLastUpdated();
+        this.renderProducerComparisonChart();
+        this.renderCombinedVideoChart();
+        this.renderVideoCharts();
+        this.renderProducerStats();
+    }
 }
 
 // Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    new ProducerTracker();
+document.addEventListener('DOMContentLoaded', async () => {
+    // Initialize data service first
+    const dataService = DataService.getInstance();
+    await dataService.initialize();
+    
+    // Then initialize the UI
+    const tracker = new ProducerTracker();
+    
+    // Set up periodic refresh every 5 minutes
+    setInterval(async () => {
+        await tracker.refreshData();
+    }, 5 * 60 * 1000);
 }); 

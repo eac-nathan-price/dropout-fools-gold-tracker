@@ -1,8 +1,151 @@
 import rawViews from './views.json' with { type: "json" };
-export const viewData: ViewData = {
-    times: rawViews.times.map(time => new Date(time)),
-    videos: rawViews.videos
+
+// API response type
+type ApiViewCounts = {
+    viewCounts: {
+        [videoId: string]: {
+            youtube: number;
+            tiktok: number;
+            reels: number;
+        };
+    };
+    fetchedAt: string;
 };
+
+// Data service class to handle real-time data fetching
+export class DataService {
+    private static instance: DataService;
+    private currentData: ViewData;
+    private isInitialized = false;
+    private initPromise: Promise<void> | null = null;
+
+    private constructor() {
+        // Initialize with local data as fallback
+        this.currentData = {
+            times: rawViews.times.map(time => new Date(time)),
+            videos: rawViews.videos
+        };
+    }
+
+    static getInstance(): DataService {
+        if (!DataService.instance) {
+            DataService.instance = new DataService();
+        }
+        return DataService.instance;
+    }
+
+    async initialize(): Promise<void> {
+        if (this.isInitialized) return;
+        if (this.initPromise) return this.initPromise;
+
+        this.initPromise = this.fetchRealTimeData();
+        await this.initPromise;
+        this.isInitialized = true;
+    }
+
+    private async fetchRealTimeData(): Promise<void> {
+        try {
+            const response = await fetch('https://fg-api-server-746154731592.us-west1.run.app/viewcounts');
+            if (!response.ok) {
+                console.warn('Failed to fetch real-time data, using local fallback');
+                return;
+            }
+
+            const apiData: ApiViewCounts[] = await response.json();
+            if (apiData.length === 0) {
+                console.warn('No data received from API, using local fallback');
+                return;
+            }
+
+            const latestData = apiData[0];
+            const fetchedTime = new Date(latestData.fetchedAt);
+            
+            // Transform API data to match our format
+            const transformedVideos: { [videoId: string]: PlatformData<number[]> } = {};
+            
+            // Video ID mapping from API format to our format
+            const videoIdMapping: { [key: string]: string } = {
+                'peel_robalino': 'peel-robalino',
+                'annas_king_for_a_day': 'annas-king',
+                'katies_d20_on_a_bus': 'katies-d20',
+                'erikas_haircut': 'erikas-haircut',
+                'sephies_sexy_car_wash': 'sephies-car-wash',
+                'grants_crack': 'grants-crack',
+                'jonnys_human_puppy_bowl': 'jonnys-puppy-bowl',
+                'lily_and_izzys_milk_taste_test': 'lily-izzys-milk',
+                'izzys_buttholes': 'izzys-buttholes',
+                'vics_brennans_exit_video': 'vics-brennans-exit'
+            };
+
+            // Transform each video's data
+            Object.entries(latestData.viewCounts).forEach(([apiVideoId, counts]) => {
+                const videoId = videoIdMapping[apiVideoId];
+                if (!videoId) {
+                    console.warn(`Unknown video ID from API: ${apiVideoId}`);
+                    return;
+                }
+
+                // Get the existing time series data for this video
+                const existingData = this.currentData.videos[videoId];
+                if (!existingData) {
+                    console.warn(`No existing data for video: ${videoId}`);
+                    return;
+                }
+
+                // Create new time series by appending the latest data point
+                const newTimes = [...this.currentData.times, fetchedTime];
+                const newYoutube = [...existingData.youtube, counts.youtube];
+                const newTiktok = [...existingData.tiktok, counts.tiktok];
+                const newInstagram = [...existingData.instagram, counts.reels]; // API uses 'reels' for Instagram
+
+                transformedVideos[videoId] = {
+                    youtube: newYoutube,
+                    tiktok: newTiktok,
+                    instagram: newInstagram
+                };
+            });
+
+            // Update the data with new time series
+            this.currentData = {
+                times: [...this.currentData.times, fetchedTime],
+                videos: transformedVideos
+            };
+
+            console.log('Successfully updated data with real-time information');
+        } catch (error) {
+            console.warn('Error fetching real-time data, using local fallback:', error);
+        }
+    }
+
+    getData(): ViewData {
+        return this.currentData;
+    }
+
+    async refreshData(): Promise<void> {
+        await this.fetchRealTimeData();
+    }
+
+    isDataInitialized(): boolean {
+        return this.isInitialized;
+    }
+}
+
+// Initialize the data service
+const dataService = DataService.getInstance();
+
+// Export the viewData with a getter that ensures initialization
+export const viewData: ViewData = new Proxy({} as ViewData, {
+    get(target, prop) {
+        if (!dataService.isDataInitialized()) {
+            console.warn('Data not yet initialized, returning fallback data');
+            return {
+                times: rawViews.times.map(time => new Date(time)),
+                videos: rawViews.videos
+            }[prop as keyof ViewData];
+        }
+        return dataService.getData()[prop as keyof ViewData];
+    }
+});
 
 export const PLATFORMS = ['youtube', 'tiktok', 'instagram'] as const;
 export const EXTENDED_PLATFORMS = [...PLATFORMS, 'all'] as const;
