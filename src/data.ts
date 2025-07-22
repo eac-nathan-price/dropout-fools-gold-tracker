@@ -1,15 +1,15 @@
 import rawViews from './views.json' with { type: "json" };
 
-// API response type
-type ApiViewCounts = {
-    viewCounts: {
+// API response type for flattened endpoint
+type FlattenedApiResponse = {
+    times: string[];
+    videos: {
         [videoId: string]: {
-            youtube: number;
-            tiktok: number;
-            reels: number;
+            youtube: number[];
+            tiktok: number[];
+            instagram: number[];
         };
     };
-    fetchedAt: string;
 };
 
 // Data service class to handle real-time data fetching
@@ -18,6 +18,7 @@ export class DataService {
     private currentData: ViewData;
     private isInitialized = false;
     private initPromise: Promise<void> | null = null;
+    private lastSuccessfulApiRequest: Date | null = null;
 
     private constructor() {
         // Initialize with local data as fallback
@@ -44,76 +45,112 @@ export class DataService {
     }
 
     private async fetchRealTimeData(): Promise<void> {
+        // Show progress bar
+        this.showProgressBar();
+        
         try {
-            const response = await fetch('https://fg-api-server-746154731592.us-west1.run.app/viewcounts');
+            // Try direct fetch first
+            let response;
+            try {
+                response = await fetch('https://fg-api-server-746154731592.us-west1.run.app/viewcounts/flattened', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    },
+                    mode: 'cors'
+                });
+            } catch (corsError) {
+                console.log('CORS error detected:', corsError);
+                // If direct fetch fails due to CORS, we'll use the fallback data
+                console.warn('CORS prevents direct API access, using local fallback');
+                return;
+            }
+            
             if (!response.ok) {
                 console.warn('Failed to fetch real-time data, using local fallback');
                 return;
             }
 
-            const apiData: ApiViewCounts[] = await response.json();
-            if (apiData.length === 0) {
-                console.warn('No data received from API, using local fallback');
+            const apiData: FlattenedApiResponse = await response.json();
+            if (!apiData.times || !apiData.videos) {
+                console.warn('Invalid data received from API, using local fallback');
                 return;
             }
 
-            const latestData = apiData[0];
-            const fetchedTime = new Date(latestData.fetchedAt);
-            
+            // Video ID mapping from API format to our format
+            const videoIdMapping: { [key: string]: string } = {
+                'peel-robalino': 'peel-robalino',
+                'annas-king-for-a-day': 'annas-king',
+                'katies-d20-on-a-bus': 'katies-d20',
+                'erikas-haircut': 'erikas-haircut',
+                'sephies-sexy-car-wash': 'sephies-car-wash',
+                'grants-crack': 'grants-crack',
+                'jonnys-human-puppy-bowl': 'jonnys-puppy-bowl',
+                'lily-and-izzys-milk-taste-test': 'lily-izzys-milk',
+                'izzys-buttholes': 'izzys-buttholes',
+                'vics-brennans-exit-video': 'vics-brennans-exit'
+            };
+
             // Transform API data to match our format
             const transformedVideos: { [videoId: string]: PlatformData<number[]> } = {};
             
-            // Video ID mapping from API format to our format
-            const videoIdMapping: { [key: string]: string } = {
-                'peel_robalino': 'peel-robalino',
-                'annas_king_for_a_day': 'annas-king',
-                'katies_d20_on_a_bus': 'katies-d20',
-                'erikas_haircut': 'erikas-haircut',
-                'sephies_sexy_car_wash': 'sephies-car-wash',
-                'grants_crack': 'grants-crack',
-                'jonnys_human_puppy_bowl': 'jonnys-puppy-bowl',
-                'lily_and_izzys_milk_taste_test': 'lily-izzys-milk',
-                'izzys_buttholes': 'izzys-buttholes',
-                'vics_brennans_exit_video': 'vics-brennans-exit'
-            };
-
             // Transform each video's data
-            Object.entries(latestData.viewCounts).forEach(([apiVideoId, counts]) => {
+            Object.entries(apiData.videos).forEach(([apiVideoId, videoData]) => {
                 const videoId = videoIdMapping[apiVideoId];
                 if (!videoId) {
                     console.warn(`Unknown video ID from API: ${apiVideoId}`);
                     return;
                 }
 
-                // Get the existing time series data for this video
-                const existingData = this.currentData.videos[videoId];
-                if (!existingData) {
-                    console.warn(`No existing data for video: ${videoId}`);
-                    return;
-                }
-
-                // Create new time series by appending the latest data point
-                const newTimes = [...this.currentData.times, fetchedTime];
-                const newYoutube = [...existingData.youtube, counts.youtube];
-                const newTiktok = [...existingData.tiktok, counts.tiktok];
-                const newInstagram = [...existingData.instagram, counts.reels]; // API uses 'reels' for Instagram
-
                 transformedVideos[videoId] = {
-                    youtube: newYoutube,
-                    tiktok: newTiktok,
-                    instagram: newInstagram
+                    youtube: videoData.youtube,
+                    tiktok: videoData.tiktok,
+                    instagram: videoData.instagram
                 };
             });
 
-            // Update the data with new time series
+            // Update the data with the complete time series from API
             this.currentData = {
-                times: [...this.currentData.times, fetchedTime],
+                times: apiData.times.map(time => new Date(time)),
                 videos: transformedVideos
             };
+
+            // Track successful API request
+            this.lastSuccessfulApiRequest = new Date();
 
             console.log('Successfully updated data with real-time information');
         } catch (error) {
             console.warn('Error fetching real-time data, using local fallback:', error);
+        } finally {
+            // Hide progress bar
+            this.hideProgressBar();
+        }
+    }
+
+    getFooterText(): string {
+        if (this.lastSuccessfulApiRequest) {
+            const timeString = this.lastSuccessfulApiRequest.toLocaleTimeString('en-US', {
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true
+            });
+            return `Receiving automatic updates. Last checked: ${timeString}`;
+        } else {
+            // Fall back to the last data point time
+            const lastDataPoint = this.currentData.times[this.currentData.times.length - 1];
+            if (lastDataPoint) {
+                const date = new Date(lastDataPoint);
+                return `${date.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                })} at ${date.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                })} (offline mode)`;
+            }
+            return 'Loading...';
         }
     }
 
@@ -127,6 +164,36 @@ export class DataService {
 
     isDataInitialized(): boolean {
         return this.isInitialized;
+    }
+
+    async testApiConnectivity(): Promise<boolean> {
+        try {
+            const response = await fetch('https://fg-api-server-746154731592.us-west1.run.app/viewcounts/flattened', {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                },
+                mode: 'cors'
+            });
+            return response.ok;
+        } catch (error) {
+            console.log('API connectivity test failed:', error);
+            return false;
+        }
+    }
+
+    private showProgressBar(): void {
+        const progressBar = document.getElementById('api-progress-bar');
+        if (progressBar) {
+            progressBar.style.display = 'block';
+        }
+    }
+
+    private hideProgressBar(): void {
+        const progressBar = document.getElementById('api-progress-bar');
+        if (progressBar) {
+            progressBar.style.display = 'none';
+        }
     }
 }
 

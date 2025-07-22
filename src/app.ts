@@ -567,18 +567,9 @@ class ProducerTracker {
 
     updateLastUpdated() {
         const lastUpdated = document.getElementById('last-updated');
-        const latestDate = viewData.times[viewData.times.length - 1];
-        if (lastUpdated && latestDate) {
-            const date = new Date(latestDate);
-            lastUpdated.textContent = date.toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric',
-            }) + ' at ' + date.toLocaleTimeString('en-US', {
-                hour: 'numeric',
-                minute: '2-digit',
-                hour12: true
-            });
+        if (lastUpdated) {
+            const dataService = DataService.getInstance();
+            lastUpdated.textContent = dataService.getFooterText();
         }
     }
 
@@ -604,8 +595,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Then initialize the UI
     const tracker = new ProducerTracker();
     
-    // Set up periodic refresh every 5 minutes
+    // Set up periodic refresh every 30 minutes
     setInterval(async () => {
         await tracker.refreshData();
-    }, 5 * 60 * 1000);
+    }, 30 * 60 * 1000);
 }); 

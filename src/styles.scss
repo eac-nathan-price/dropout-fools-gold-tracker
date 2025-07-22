@@ -17,6 +17,38 @@ body {
     font-style: normal;
 }
 
+/* API Progress Bar */
+.api-progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.1);
+    z-index: 9999;
+    overflow: hidden;
+}
+
+.api-progress-indicator {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, #ffd700, transparent);
+    animation: api-progress-animation 1.5s ease-in-out infinite;
+    transform: translateX(-100%);
+}
+
+@keyframes api-progress-animation {
+    0% {
+        transform: translateX(-100%);
+    }
+    50% {
+        transform: translateX(0%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
 // .raleway-<uniquifier> {
 //     font-family: "Raleway", sans-serif;
 //     font-optical-sizing: auto;
