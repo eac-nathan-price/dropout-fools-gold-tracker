@@ -35,90 +35,6 @@ export const isDebug = false && (window.location.hostname === 'localhost' || win
 // Track last API check time
 let lastApiCheckTime: Date | null = null;
 
-// Track refresh interval for manual control
-let refreshInterval: number | null = null;
-
-// Function to fetch and merge API data
-export async function fetchAndMergeApiData(): Promise<void> {
-    // Show progress bar
-    const progressBar = document.getElementById('progress-bar');
-    if (progressBar) {
-        progressBar.style.display = 'block';
-    }
-    
-    try {
-        const response = await fetch(API_ENDPOINT);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const apiData: ApiResponse = await response.json();
-        
-        console.log('API Response:', apiData);
-        
-        // Get the most recent timestamp from existing data
-        const lastExistingTime = new Date(Math.max(...viewData.times.map(t => t.getTime())));
-        console.log('Last existing time:', lastExistingTime);
-        
-        // Filter API times to only include those after the last existing time
-        const newTimes: Date[] = [];
-        const timeIndices: number[] = [];
-        
-        apiData.times.forEach((timeStr, index) => {
-            const apiTime = new Date(timeStr);
-            if (apiTime > lastExistingTime) {
-                newTimes.push(apiTime);
-                timeIndices.push(index);
-            }
-        });
-        
-        console.log('New times found:', newTimes.length);
-        console.log('New times:', newTimes);
-        
-        if (newTimes.length === 0) {
-            console.log('No new data to append');
-            showNotification('No new data available', 'success');
-            return;
-        }
-        
-        // Append new times to existing data
-        viewData.times.push(...newTimes);
-        
-        // Append new view data for each video
-        Object.entries(apiData.videos).forEach(([apiKey, platformData]) => {
-            const viewsKey = API_KEY_MAPPING[apiKey];
-            if (viewsKey && viewData.videos[viewsKey]) {
-                // Append new data for each platform
-                Object.entries(platformData).forEach(([platform, values]) => {
-                    const newValues = timeIndices.map(index => values[index]);
-                    viewData.videos[viewsKey][platform as keyof typeof platformData].push(...newValues);
-                });
-            }
-        });
-        
-        console.log(`Appended ${newTimes.length} new data points`);
-        
-        // Trigger chart updates
-        triggerChartUpdates();
-        
-        // Show success message
-        showNotification(`Successfully updated with ${newTimes.length} new data points`, 'success');
-        
-    } catch (error) {
-        console.error('Error fetching API data:', error);
-        showNotification('Failed to fetch new data. Please try again.', 'error');
-    } finally {
-        // Hide progress bar
-        if (progressBar) {
-            progressBar.style.display = 'none';
-        }
-        
-        // Update last check time
-        lastApiCheckTime = new Date();
-        updateLastCheckTime();
-    }
-}
-
 // Function to update the last check time display
 function updateLastCheckTime(): void {
     const lastCheckElement = document.getElementById('last-check');
@@ -135,15 +51,183 @@ function updateLastCheckTime(): void {
     }
 }
 
-// Function to start automatic refresh every 10 minutes
-export function startAutomaticRefresh(): void {
-    // Initial fetch
-    fetchAndMergeApiData();
-    
-    // Set up interval for every 10 minutes (600,000 ms)
-    refreshInterval = window.setInterval(() => {
+// --- LocalStorage Caching and API Throttling ---
+const LOCALSTORAGE_DATA_KEY = 'cachedViewData';
+const LOCALSTORAGE_TIME_KEY = 'lastApiRequestTime';
+
+function parseViewData(obj: any): ViewData | null {
+    if (!obj || typeof obj !== 'object' || !Array.isArray(obj.times) || typeof obj.videos !== 'object') return null;
+    try {
+        return {
+            times: obj.times.map((t: any) => new Date(t)),
+            videos: obj.videos
+        };
+    } catch {
+        return null;
+    }
+}
+
+function getLatestTime(viewData: ViewData): Date {
+    return viewData.times.length ? new Date(Math.max(...viewData.times.map(t => t.getTime()))) : new Date(0);
+}
+
+function loadCachedViewData(): ViewData | null {
+    const raw = localStorage.getItem(LOCALSTORAGE_DATA_KEY);
+    if (!raw) return null;
+    try {
+        const obj = JSON.parse(raw);
+        return parseViewData(obj);
+    } catch {
+        return null;
+    }
+}
+
+function saveCachedViewData(data: ViewData) {
+    localStorage.setItem(LOCALSTORAGE_DATA_KEY, JSON.stringify({
+        times: data.times.map(t => t.toISOString()),
+        videos: data.videos
+    }));
+}
+
+function getLastApiRequestTime(): Date | null {
+    const raw = localStorage.getItem(LOCALSTORAGE_TIME_KEY);
+    if (!raw) return null;
+    const d = new Date(raw);
+    return isNaN(d.getTime()) ? null : d;
+}
+
+function setLastApiRequestTime(date: Date) {
+    localStorage.setItem(LOCALSTORAGE_TIME_KEY, date.toISOString());
+}
+
+// --- ViewData Initialization ---
+const rawViewData: ViewData = {
+    times: rawViews.times.map(time => new Date(time)),
+    videos: rawViews.videos
+};
+
+let viewData: ViewData = rawViewData;
+const cached = loadCachedViewData();
+let usedCache = false;
+if (cached && getLatestTime(cached) > getLatestTime(rawViewData)) {
+    viewData = cached;
+    usedCache = true;
+}
+export { viewData };
+
+// --- API Throttling and Refresh Logic ---
+let refreshInterval: number | null = null;
+let refreshTimeout: number | null = null;
+
+// Show toast on initial load if request is throttled
+function maybeShowInitialCacheToast() {
+    const lastReq = getLastApiRequestTime();
+    const now = new Date();
+    if (lastReq && (now.getTime() - lastReq.getTime()) < 600000) {
+        // Request will be throttled
+        if (usedCache) {
+            showNotification('Data updated from cache', 'success');
+        } else {
+            showNotification('Cached data is up-to-date', 'success');
+        }
+    }
+}
+
+// --- API Fetch and Merge ---
+export async function fetchAndMergeApiData(): Promise<void> {
+    // Prevent double fetches if called too soon
+    const lastReq = getLastApiRequestTime();
+    const now = new Date();
+    if (lastReq && (now.getTime() - lastReq.getTime()) < 600000) {
+        // Too soon, skip
+        return;
+    }
+    setLastApiRequestTime(now);
+    // Show progress bar
+    const progressBar = document.getElementById('progress-bar');
+    if (progressBar) {
+        progressBar.style.display = 'block';
+    }
+    try {
+        const response = await fetch(API_ENDPOINT);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const apiData: ApiResponse = await response.json();
+        // Get the most recent timestamp from existing data
+        const lastExistingTime = getLatestTime(viewData);
+        // Filter API times to only include those after the last existing time
+        const newTimes: Date[] = [];
+        const timeIndices: number[] = [];
+        apiData.times.forEach((timeStr, index) => {
+            const apiTime = new Date(timeStr);
+            if (apiTime > lastExistingTime) {
+                newTimes.push(apiTime);
+                timeIndices.push(index);
+            }
+        });
+        if (newTimes.length === 0) {
+            showNotification('No new data available', 'success');
+            return;
+        }
+        // Append new times to existing data
+        viewData.times.push(...newTimes);
+        // Append new view data for each video
+        Object.entries(apiData.videos).forEach(([apiKey, platformData]) => {
+            const viewsKey = API_KEY_MAPPING[apiKey];
+            if (viewsKey && viewData.videos[viewsKey]) {
+                Object.entries(platformData).forEach(([platform, values]) => {
+                    const newValues = timeIndices.map(index => values[index]);
+                    viewData.videos[viewsKey][platform as keyof typeof platformData].push(...newValues);
+                });
+            }
+        });
+        // Save updated data to localStorage
+        saveCachedViewData(viewData);
+        setLastApiRequestTime(new Date());
+        // Trigger chart updates
+        triggerChartUpdates();
+        showNotification(`Successfully updated with ${newTimes.length} new data points`, 'success');
+    } catch (error) {
+        console.error('Error fetching API data:', error);
+        showNotification('Failed to fetch new data. Please try again.', 'error');
+    } finally {
+        if (progressBar) {
+            progressBar.style.display = 'none';
+        }
+        lastApiCheckTime = new Date();
+        updateLastCheckTime();
+    }
+}
+
+function scheduleNextApiFetch(ms: number) {
+    if (refreshTimeout) clearTimeout(refreshTimeout);
+    refreshTimeout = window.setTimeout(() => {
         fetchAndMergeApiData();
-    }, 600000);
+        refreshInterval = window.setInterval(fetchAndMergeApiData, 600000);
+    }, ms);
+}
+
+export function startAutomaticRefresh(): void {
+    // Determine when to fetch next
+    const lastReq = getLastApiRequestTime();
+    const now = new Date();
+    if (!lastReq) {
+        // First visit: fetch now, then every 10min
+        fetchAndMergeApiData();
+        refreshInterval = window.setInterval(fetchAndMergeApiData, 600000);
+    } else {
+        const elapsed = now.getTime() - lastReq.getTime();
+        if (elapsed >= 600000) {
+            // >10min: fetch now, then every 10min
+            fetchAndMergeApiData();
+            refreshInterval = window.setInterval(fetchAndMergeApiData, 600000);
+        } else {
+            // <10min: schedule fetch for (10min-elapsed), then every 10min
+            scheduleNextApiFetch(600000 - elapsed);
+            maybeShowInitialCacheToast();
+        }
+    }
 }
 
 // Function to manually refresh data
@@ -260,11 +344,6 @@ function showNotification(message: string, type: 'success' | 'error'): void {
     `;
     document.head.appendChild(slideOutStyle);
 }
-
-export const viewData: ViewData = {
-    times: rawViews.times.map(time => new Date(time)),
-    videos: rawViews.videos
-};
 
 export const PLATFORMS = ['youtube', 'tiktok', 'instagram'] as const;
 export const EXTENDED_PLATFORMS = [...PLATFORMS, 'all'] as const;

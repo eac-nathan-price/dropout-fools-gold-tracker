@@ -788,5 +788,24 @@ class ProducerTracker {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
+    // Show last check time from localStorage if available
+    try {
+        const lastCheckElement = document.getElementById('last-check');
+        const raw = localStorage.getItem('lastApiRequestTime');
+        if (lastCheckElement && raw) {
+            const d = new Date(raw);
+            if (!isNaN(d.getTime())) {
+                lastCheckElement.textContent = d.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                }) + ' at ' + d.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            }
+        }
+    } catch {}
     new ProducerTracker();
 });
