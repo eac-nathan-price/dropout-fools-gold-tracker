@@ -195,11 +195,13 @@ class ProducerStatsCalculator {
 class ProducerTracker {
     currentPlatform: ExtendedPlatform;
     producerChart: ChartType<'line', { x: Datelike; y: number; }[], unknown> | null;
+    combinedVideoChart: ChartType<'line', { x: Datelike; y: number; }[], unknown> | null;
     videoCharts: Map<string, ChartType<'line', { x: Datelike; y: number; }[], unknown>>;
 
     constructor() {
         this.currentPlatform = 'all';
         this.producerChart = null;
+        this.combinedVideoChart = null;
         this.videoCharts = new Map();
         this.init();
     }
@@ -208,6 +210,7 @@ class ProducerTracker {
         this.setupEventListeners();
         this.updateLastUpdated();
         this.renderProducerComparisonChart();
+        this.renderCombinedVideoChart();
         this.renderVideoCharts();
         this.renderProducerStats();
     }
@@ -219,6 +222,7 @@ class ProducerTracker {
                 const target = e.target as HTMLSelectElement;
                 this.currentPlatform = target.value as ExtendedPlatform;
                 this.renderProducerComparisonChart();
+                this.renderCombinedVideoChart();
                 this.renderProducerStats();
             });
         }
@@ -263,6 +267,53 @@ class ProducerTracker {
             data: { datasets },
             options: {
                 ...ChartManager.getChartOptions(false, customTooltipLabel),
+                scales: CHART_DEFAULTS.scales
+            }
+        });
+    }
+
+    renderCombinedVideoChart() {
+        const ctx = document.getElementById('combined-video-chart') as HTMLCanvasElement | null;
+        if (!ctx) return;
+        ChartManager.destroyChart(this.combinedVideoChart);
+        
+        // Generate distinct colors for each video by equally dividing the hue spectrum
+        const videoColors = videoData.map((_, index) => {
+            const hue = (index * 360) / videoData.length;
+            return `hsl(${hue}, 70%, 60%)`;
+        });
+
+        const datasets = videoData.map((video, index) => {
+            const data = ChartManager.createTimeData(
+                viewData.times,
+                viewData.times.map(time => {
+                    const timeIndex = viewData.times.indexOf(time);
+                    return getPlatformViews(video, timeIndex).all;
+                })
+            );
+            return ChartManager.createDataset(data, {
+                label: video.title,
+                borderColor: videoColors[index],
+                backgroundColor: videoColors[index] + '20',
+                fill: false,
+                borderWidth: 2,
+                pointBackgroundColor: videoColors[index],
+                pointBorderWidth: 1,
+                pointRadius: 3,
+                pointHoverRadius: 5
+            });
+        });
+
+        const customTooltipLabel = (context: any) => {
+            const video = videoData.find(v => v.title === context.dataset.label);
+            return `${context.dataset.label}: ${formatNumber(context.parsed.y)} views`;
+        };
+
+        this.combinedVideoChart = ChartManager.createChart(ctx, {
+            type: 'line',
+            data: { datasets },
+            options: {
+                ...ChartManager.getChartOptions(true, customTooltipLabel),
                 scales: CHART_DEFAULTS.scales
             }
         });

@@ -19,19 +19,19 @@ export const producers: { [id: string]: Producer } = {
         id: "rekha", 
         name: "Rekha",
         fullName: "Rekha Shankar",
-        color: "#06b6d4" // Cyan
+        color: "#0088ff" // Bright Blue
     },
     "jordan": {
         id: "jordan", 
         name: "Jordan",
         fullName: "Jordan Myrick",
-        color: "#6366f1" // Indigo
+        color: "#8800ff" // Bright Purple
     },
     "sam": {
         id: "sam",
         name: "Sam",
         fullName: "Sam Reich",
-        color: "#8b5cf6" // Purple
+        color: "#ff8c00" // Orange
     }
 };
 
