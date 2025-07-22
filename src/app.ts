@@ -59,6 +59,18 @@ class ChartManager {
         return times.map((time, index) => ({ x: time, y: values[index] }));
     }
 
+    static updateChartData(chart: ChartType<'line', { x: Datelike; y: number; }[], unknown>, newTimes: Date[], newDataPoints: number[][]): void {
+        // Update each dataset with new data points
+        chart.data.datasets.forEach((dataset: any, datasetIndex: number) => {
+            const newDataForDataset = newTimes.map((time, timeIndex) => ({
+                x: time,
+                y: newDataPoints[datasetIndex][timeIndex]
+            }));
+            dataset.data.push(...newDataForDataset);
+        });
+        chart.update();
+    }
+
     static getChartOptions(showLegend: boolean = true, customTooltipLabel?: (context: any) => string) {
         const tooltipCallbacks: any = { ...CHART_DEFAULTS.tooltip.callbacks };
         if (customTooltipLabel) tooltipCallbacks.label = customTooltipLabel;
@@ -236,7 +248,7 @@ class ProducerTracker {
             platformFilter.addEventListener('change', (e: Event) => {
                 const target = e.target as HTMLSelectElement;
                 this.currentPlatform = target.value as ExtendedPlatform;
-                this.renderProducerComparisonChart();
+                this.updateProducerComparisonChartForFilter();
                 this.renderProducerStats();
             });
         }
@@ -246,7 +258,7 @@ class ProducerTracker {
             videoPlatformFilter.addEventListener('change', (e: Event) => {
                 const target = e.target as HTMLSelectElement;
                 this.currentVideoPlatform = target.value as ExtendedPlatform;
-                this.renderCombinedVideoChart();
+                this.updateCombinedVideoChartForFilter();
             });
         }
 
@@ -269,9 +281,9 @@ class ProducerTracker {
 
     // Method to refresh all charts when new data is available
     refreshAllCharts() {
-        this.renderProducerComparisonChart();
-        this.renderCombinedVideoChart();
-        this.renderVideoCharts();
+        this.updateProducerComparisonChart();
+        this.updateCombinedVideoChart();
+        this.updateVideoCharts();
         this.renderProducerStats();
     }
 
@@ -308,6 +320,44 @@ class ProducerTracker {
                 scales: CHART_DEFAULTS.scales
             }
         });
+    }
+
+    // Update producer comparison chart data without recreating the chart
+    updateProducerComparisonChart() {
+        if (!this.producerChart) {
+            this.renderProducerComparisonChart();
+            return;
+        }
+
+        // Get the current number of data points in the chart
+        const currentDataLength = this.producerChart.data.datasets[0]?.data.length || 0;
+        
+        // If we have new data points, add them
+        if (viewData.times.length > currentDataLength) {
+            const newTimes = viewData.times.slice(currentDataLength);
+            const newDataPoints = Object.values(producers).map(producer => 
+                newTimes.map(time => getProducerViewsForDate(producer.id, time, this.currentPlatform))
+            );
+            
+            ChartManager.updateChartData(this.producerChart, newTimes, newDataPoints);
+        }
+    }
+
+    // Update producer comparison chart for platform filter changes
+    updateProducerComparisonChartForFilter() {
+        if (!this.producerChart) {
+            this.renderProducerComparisonChart();
+            return;
+        }
+
+        // Update all data points for the new platform filter
+        this.producerChart.data.datasets.forEach((dataset: any, datasetIndex: number) => {
+            const producer = Object.values(producers)[datasetIndex];
+            const newData = viewData.times.map(time => getProducerViewsForDate(producer.id, time, this.currentPlatform));
+            dataset.data = ChartManager.createTimeData(viewData.times, newData);
+        });
+        
+        this.producerChart.update();
     }
 
     renderCombinedVideoChart() {
@@ -355,6 +405,50 @@ class ProducerTracker {
                 scales: CHART_DEFAULTS.scales
             }
         });
+    }
+
+    // Update combined video chart data without recreating the chart
+    updateCombinedVideoChart() {
+        if (!this.combinedVideoChart) {
+            this.renderCombinedVideoChart();
+            return;
+        }
+
+        // Get the current number of data points in the chart
+        const currentDataLength = this.combinedVideoChart.data.datasets[0]?.data.length || 0;
+        
+        // If we have new data points, add them
+        if (viewData.times.length > currentDataLength) {
+            const newTimes = viewData.times.slice(currentDataLength);
+            const newDataPoints = videoData.map(video => 
+                newTimes.map(time => {
+                    const timeIndex = viewData.times.indexOf(time);
+                    return getPlatformViews(video, timeIndex)[this.currentVideoPlatform];
+                })
+            );
+            
+            ChartManager.updateChartData(this.combinedVideoChart, newTimes, newDataPoints);
+        }
+    }
+
+    // Update combined video chart for platform filter changes
+    updateCombinedVideoChartForFilter() {
+        if (!this.combinedVideoChart) {
+            this.renderCombinedVideoChart();
+            return;
+        }
+
+        // Update all data points for the new platform filter
+        this.combinedVideoChart.data.datasets.forEach((dataset: any, datasetIndex: number) => {
+            const video = videoData[datasetIndex];
+            const newData = viewData.times.map(time => {
+                const timeIndex = viewData.times.indexOf(time);
+                return getPlatformViews(video, timeIndex)[this.currentVideoPlatform];
+            });
+            dataset.data = ChartManager.createTimeData(viewData.times, newData);
+        });
+        
+        this.combinedVideoChart.update();
     }
 
     renderProducerStats() {
@@ -413,7 +507,7 @@ class ProducerTracker {
         const legendItem = document.querySelector(`[data-producer="${producerId}"]`) as HTMLElement | null;
         if (!legendItem) return;
         legendItem.classList.toggle('hidden', !legendItem.classList.contains('hidden'));
-        this.renderProducerComparisonChart();
+        this.updateProducerComparisonChart();
     }
 
     renderVideoCharts() {
@@ -558,6 +652,47 @@ class ProducerTracker {
             }
         });
         this.videoCharts.set(video.id, chart);
+    }
+
+    // Update individual video chart data without recreating the chart
+    updateVideoChart(video: Video) {
+        const chart = this.videoCharts.get(video.id);
+        if (!chart) {
+            this.renderVideoChart(video);
+            return;
+        }
+
+        // Get the current number of data points in the chart
+        const currentDataLength = chart.data.datasets[0]?.data.length || 0;
+        
+        // If we have new data points, add them
+        if (viewData.times.length > currentDataLength) {
+            const newTimes = viewData.times.slice(currentDataLength);
+            const newDataPoints = [
+                // Platform datasets
+                ...PLATFORMS.map(platform => 
+                    newTimes.map(time => {
+                        const timeIndex = viewData.times.indexOf(time);
+                        return video[platform][timeIndex];
+                    })
+                ),
+                // Total dataset
+                newTimes.map(time => {
+                    const timeIndex = viewData.times.indexOf(time);
+                    const platformViews = getPlatformViews(video, timeIndex);
+                    return platformViews.all;
+                })
+            ];
+            
+            ChartManager.updateChartData(chart as ChartType<'line', { x: Datelike; y: number; }[], unknown>, newTimes, newDataPoints);
+        }
+    }
+
+    // Update all video charts
+    updateVideoCharts() {
+        videoData.forEach(video => {
+            this.updateVideoChart(video);
+        });
     }
 
     showYouTubePlayer(videoLink: string, videoTitle: string) {
