@@ -29,8 +29,14 @@ type ApiResponse = {
     };
 };
 
+// Check if running on localhost for debug mode
+export const isDebug = false && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+
 // Track last API check time
 let lastApiCheckTime: Date | null = null;
+
+// Track refresh interval for manual control
+let refreshInterval: number | null = null;
 
 // Function to fetch and merge API data
 export async function fetchAndMergeApiData(): Promise<void> {
@@ -135,9 +141,63 @@ export function startAutomaticRefresh(): void {
     fetchAndMergeApiData();
     
     // Set up interval for every 10 minutes (600,000 ms)
-    setInterval(() => {
+    refreshInterval = window.setInterval(() => {
         fetchAndMergeApiData();
     }, 600000);
+}
+
+// Function to manually refresh data
+export async function manualRefresh(): Promise<void> {
+    // Return immediately if it's been fewer than 30 seconds since last check
+    if (lastApiCheckTime && (Date.now() - lastApiCheckTime.getTime()) < 30000) {
+        console.log('Manual refresh blocked: too soon since last API check');
+        return;
+    }
+    
+    // Clear existing refresh interval
+    if (refreshInterval) {
+        clearInterval(refreshInterval);
+        refreshInterval = null;
+    }
+    
+    // Fetch new data
+    await fetchAndMergeApiData();
+    
+    // Start new interval 10 minutes from now
+    refreshInterval = window.setInterval(() => {
+        fetchAndMergeApiData();
+    }, 600000);
+}
+
+// Function to simulate API error for debugging
+export async function simulateApiError(): Promise<void> {
+    if (!isDebug) return;
+    
+    // Show progress bar
+    const progressBar = document.getElementById('progress-bar');
+    if (progressBar) {
+        progressBar.style.display = 'block';
+    }
+    
+    try {
+        // Simulate a delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        // Simulate an error
+        throw new Error('Simulated API error for debugging');
+    } catch (error) {
+        console.error('Simulated API error:', error);
+        showNotification('Simulated API error triggered', 'error');
+    } finally {
+        // Hide progress bar
+        if (progressBar) {
+            progressBar.style.display = 'none';
+        }
+        
+        // Update last check time
+        lastApiCheckTime = new Date();
+        updateLastCheckTime();
+    }
 }
 
 // Function to trigger chart updates

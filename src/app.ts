@@ -17,7 +17,10 @@ import {
     EXTENDED_PLATFORMS,
     PLATFORMS,
     fetchAndMergeApiData,
-    startAutomaticRefresh
+    startAutomaticRefresh,
+    manualRefresh,
+    simulateApiError,
+    isDebug
 } from './data.js';
 
 // Template utility class
@@ -277,6 +280,53 @@ class ProducerTracker {
             this.refreshAllCharts();
             this.updateLastUpdated();
         });
+
+        // Set up debug buttons if in debug mode
+        if (isDebug) {
+            this.setupDebugButtons();
+        }
+    }
+
+    // Set up debug buttons for development
+    setupDebugButtons() {
+        const debugButtons = document.getElementById('debug-buttons');
+        if (debugButtons) {
+            debugButtons.style.display = 'flex';
+        }
+
+        const manualRefreshBtn = document.getElementById('manual-refresh-btn') as HTMLButtonElement;
+        if (manualRefreshBtn) {
+            manualRefreshBtn.addEventListener('click', async () => {
+                manualRefreshBtn.disabled = true;
+                manualRefreshBtn.textContent = '⏳ Refreshing...';
+                
+                try {
+                    await manualRefresh();
+                } catch (error) {
+                    console.error('Manual refresh failed:', error);
+                } finally {
+                    manualRefreshBtn.disabled = false;
+                    manualRefreshBtn.textContent = '🔄 Manual Refresh';
+                }
+            });
+        }
+
+        const simulateErrorBtn = document.getElementById('simulate-error-btn') as HTMLButtonElement;
+        if (simulateErrorBtn) {
+            simulateErrorBtn.addEventListener('click', async () => {
+                simulateErrorBtn.disabled = true;
+                simulateErrorBtn.textContent = '⏳ Simulating...';
+                
+                try {
+                    await simulateApiError();
+                } catch (error) {
+                    console.error('Error simulation failed:', error);
+                } finally {
+                    simulateErrorBtn.disabled = false;
+                    simulateErrorBtn.textContent = '⚠️ Simulate Error';
+                }
+            });
+        }
     }
 
     // Method to refresh all charts when new data is available
