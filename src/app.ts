@@ -353,9 +353,9 @@ class ProducerTracker {
                 fill: false,
                 borderWidth: 3,
                 pointBackgroundColor: producer.color,
-                pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 8
+                pointBorderWidth: 0,
+                pointRadius: 0,
+                pointHoverRadius: 0
             });
         });
         const customTooltipLabel = (context: any) => {
@@ -436,9 +436,9 @@ class ProducerTracker {
                 fill: false,
                 borderWidth: 2,
                 pointBackgroundColor: videoColors[index],
-                pointBorderWidth: 1,
-                pointRadius: 3,
-                pointHoverRadius: 5
+                pointBorderWidth: 0,
+                pointRadius: 0,
+                pointHoverRadius: 0
             });
         });
 

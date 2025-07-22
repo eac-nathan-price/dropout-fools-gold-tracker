@@ -433,19 +433,25 @@ export const PLATFORM_CONFIG: Record<ExtendedPlatform, PlatformConfig> = {
         label: 'YouTube',
         borderColor: '#ff0000',
         backgroundColor: 'rgba(255, 0, 0, 0.2)',
-        pointBackgroundColor: '#ff0000'
+        pointBackgroundColor: '#ff0000',
+        fill: false,
+        pointRadius: 0
     },
     tiktok: {
         label: 'TikTok',
         borderColor: '#ffffff',
         backgroundColor: 'rgba(255, 255, 255, 0.2)',
-        pointBackgroundColor: '#ffffff'
+        pointBackgroundColor: '#ffffff',
+        fill: false,
+        pointRadius: 0
     },
     instagram: {
         label: 'Instagram',
         borderColor: '#ff69b4',
         backgroundColor: 'rgba(255, 105, 180, 0.2)',
-        pointBackgroundColor: '#ff69b4'
+        pointBackgroundColor: '#ff69b4',
+        fill: false,
+        pointRadius: 0
     },
     all: {
         label: 'Total',
@@ -454,9 +460,9 @@ export const PLATFORM_CONFIG: Record<ExtendedPlatform, PlatformConfig> = {
         pointBackgroundColor: '#ffd700',
         borderWidth: 3,
         fill: false,
-        pointRadius: 4,
-        pointHoverRadius: 6,
-        pointBorderWidth: 2
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        pointBorderWidth: 0
     }
 };
 
