@@ -911,6 +911,11 @@ body {
         height: 300px;
     }
     
+    /* Make only the video comparison chart taller on mobile */
+    .chart-container-large:has(#combined-video-chart) {
+        height: 450px;
+    }
+    
     .producer-legend {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
