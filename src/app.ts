@@ -260,8 +260,51 @@ class ProducerTracker {
     renderProducerComparisonChart() {
         const ctx = document.getElementById('producer-comparison-chart') as HTMLCanvasElement | null;
         if (!ctx) return;
-        ChartManager.destroyChart(this.producerChart);
-        const datasets = Object.values(producers).map(producer => {
+        
+        if (this.producerChart) {
+            // Update existing chart
+            this.updateProducerComparisonChart();
+        } else {
+            // Create new chart
+            ChartManager.destroyChart(this.producerChart);
+            const datasets = Object.values(producers).map(producer => {
+                const data = ChartManager.createTimeData(
+                    viewData.times,
+                    viewData.times.map(time => getProducerViewsForDate(producer.id, time, this.currentPlatform))
+                );
+                return ChartManager.createDataset(data, {
+                    label: producer.name,
+                    borderColor: producer.color,
+                    backgroundColor: producer.color + '20',
+                    fill: false,
+                    borderWidth: 3,
+                    pointBackgroundColor: producer.color,
+                    pointBorderWidth: 2,
+                    pointRadius: 5,
+                    pointHoverRadius: 8
+                });
+            });
+            const customTooltipLabel = (context: any) => {
+                const producer = Object.values(producers).find(p => p.name === context.dataset.label);
+                return `${producer ? producer.name : 'Unknown'}: ${formatNumber(context.parsed.y)} views`;
+            };
+            this.producerChart = ChartManager.createChart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    ...ChartManager.getChartOptions(false, customTooltipLabel),
+                    scales: CHART_DEFAULTS.scales
+                }
+            });
+        }
+    }
+
+    updateProducerComparisonChart() {
+        if (!this.producerChart) return;
+        
+        // Update chart data
+        this.producerChart.data.labels = viewData.times;
+        this.producerChart.data.datasets = Object.values(producers).map(producer => {
             const data = ChartManager.createTimeData(
                 viewData.times,
                 viewData.times.map(time => getProducerViewsForDate(producer.id, time, this.currentPlatform))
@@ -278,32 +321,77 @@ class ProducerTracker {
                 pointHoverRadius: 8
             });
         });
-        const customTooltipLabel = (context: any) => {
-            const producer = Object.values(producers).find(p => p.name === context.dataset.label);
-            return `${producer ? producer.name : 'Unknown'}: ${formatNumber(context.parsed.y)} views`;
-        };
-        this.producerChart = ChartManager.createChart(ctx, {
-            type: 'line',
-            data: { datasets },
-            options: {
-                ...ChartManager.getChartOptions(false, customTooltipLabel),
-                scales: CHART_DEFAULTS.scales
-            }
-        });
+        
+        // Update the chart smoothly
+        this.producerChart.update('none'); // 'none' for instant update, 'active' for animation
     }
 
     renderCombinedVideoChart() {
         const ctx = document.getElementById('combined-video-chart') as HTMLCanvasElement | null;
         if (!ctx) return;
-        ChartManager.destroyChart(this.combinedVideoChart);
         
-        // Generate distinct colors for each video by equally dividing the hue spectrum
+        if (this.combinedVideoChart) {
+            // Update existing chart
+            this.updateCombinedVideoChart();
+        } else {
+            // Create new chart
+            ChartManager.destroyChart(this.combinedVideoChart);
+            
+            // Generate distinct colors for each video by equally dividing the hue spectrum
+            const videoColors = videoData.map((_, index) => {
+                const hue = (index * 360) / videoData.length;
+                return `hsl(${hue}, 70%, 60%)`;
+            });
+
+            const datasets = videoData.map((video, index) => {
+                const data = ChartManager.createTimeData(
+                    viewData.times,
+                    viewData.times.map(time => {
+                        const timeIndex = viewData.times.indexOf(time);
+                        return getPlatformViews(video, timeIndex)[this.currentVideoPlatform];
+                    })
+                );
+                return ChartManager.createDataset(data, {
+                    label: video.title,
+                    borderColor: videoColors[index],
+                    backgroundColor: videoColors[index] + '20',
+                    fill: false,
+                    borderWidth: 2,
+                    pointBackgroundColor: videoColors[index],
+                    pointBorderWidth: 1,
+                    pointRadius: 3,
+                    pointHoverRadius: 5
+                });
+            });
+
+            const customTooltipLabel = (context: any) => {
+                const video = videoData.find(v => v.title === context.dataset.label);
+                return `${context.dataset.label}: ${formatNumber(context.parsed.y)} views`;
+            };
+
+            this.combinedVideoChart = ChartManager.createChart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    ...ChartManager.getChartOptions(true, customTooltipLabel),
+                    scales: CHART_DEFAULTS.scales
+                }
+            });
+        }
+    }
+
+    updateCombinedVideoChart() {
+        if (!this.combinedVideoChart) return;
+        
+        // Generate distinct colors for each video
         const videoColors = videoData.map((_, index) => {
             const hue = (index * 360) / videoData.length;
             return `hsl(${hue}, 70%, 60%)`;
         });
 
-        const datasets = videoData.map((video, index) => {
+        // Update chart data
+        this.combinedVideoChart.data.labels = viewData.times;
+        this.combinedVideoChart.data.datasets = videoData.map((video, index) => {
             const data = ChartManager.createTimeData(
                 viewData.times,
                 viewData.times.map(time => {
@@ -323,20 +411,9 @@ class ProducerTracker {
                 pointHoverRadius: 5
             });
         });
-
-        const customTooltipLabel = (context: any) => {
-            const video = videoData.find(v => v.title === context.dataset.label);
-            return `${context.dataset.label}: ${formatNumber(context.parsed.y)} views`;
-        };
-
-        this.combinedVideoChart = ChartManager.createChart(ctx, {
-            type: 'line',
-            data: { datasets },
-            options: {
-                ...ChartManager.getChartOptions(true, customTooltipLabel),
-                scales: CHART_DEFAULTS.scales
-            }
-        });
+        
+        // Update the chart smoothly
+        this.combinedVideoChart.update('none');
     }
 
     renderProducerStats() {
@@ -508,7 +585,56 @@ class ProducerTracker {
     renderVideoChart(video: Video) {
         const ctx = document.getElementById(`chart-${video.id}`) as HTMLCanvasElement | null;
         if (!ctx) return;
-        const datasets = [
+        
+        const existingChart = this.videoCharts.get(video.id);
+        
+        if (existingChart) {
+            // Update existing chart
+            this.updateVideoChart(video);
+        } else {
+            // Create new chart
+            const datasets = [
+                // Platform datasets
+                ...PLATFORMS.map(platform =>
+                    ChartManager.createDataset(
+                        ChartManager.createTimeData(viewData.times, video[platform] as number[]),
+                        PLATFORM_CONFIG[platform]
+                    )
+                ),
+                // Total dataset
+                ChartManager.createDataset(
+                    ChartManager.createTimeData(
+                        viewData.times,
+                        viewData.times.map((_, index) => {
+                            const platformViews = getPlatformViews(video, index);
+                            return platformViews.all;
+                        })
+                    ),
+                    PLATFORM_CONFIG.all
+                )
+            ];
+            const customTooltipLabel = (context: any) => {
+                return `${context.dataset.label}: ${formatNumber(context.parsed.y)} views`;
+            };
+            const chart = ChartManager.createChart(ctx, {
+                type: 'line',
+                data: { datasets },
+                options: {
+                    ...ChartManager.getChartOptions(true, customTooltipLabel),
+                    scales: CHART_DEFAULTS.scales,
+                }
+            });
+            this.videoCharts.set(video.id, chart);
+        }
+    }
+
+    updateVideoChart(video: Video) {
+        const chart = this.videoCharts.get(video.id);
+        if (!chart) return;
+        
+        // Update chart data
+        chart.data.labels = viewData.times;
+        chart.data.datasets = [
             // Platform datasets
             ...PLATFORMS.map(platform =>
                 ChartManager.createDataset(
@@ -528,18 +654,9 @@ class ProducerTracker {
                 PLATFORM_CONFIG.all
             )
         ];
-        const customTooltipLabel = (context: any) => {
-            return `${context.dataset.label}: ${formatNumber(context.parsed.y)} views`;
-        };
-        const chart = ChartManager.createChart(ctx, {
-            type: 'line',
-            data: { datasets },
-            options: {
-                ...ChartManager.getChartOptions(true, customTooltipLabel),
-                scales: CHART_DEFAULTS.scales,
-            }
-        });
-        this.videoCharts.set(video.id, chart);
+        
+        // Update the chart smoothly
+        chart.update('none');
     }
 
     showYouTubePlayer(videoLink: string, videoTitle: string) {

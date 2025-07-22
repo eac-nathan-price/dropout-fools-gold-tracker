@@ -128,6 +128,12 @@ export class DataService {
             
             // Debug: Compare API data with local views.json
             this.debugCompareData(apiData);
+            
+            // Debug: Log data switching details
+            this.debugDataSwitch();
+            
+            // Log the data switch for transparency
+            console.log(`🔄 Data switch: ${this.currentData.times.length} timestamps, ${Object.keys(this.currentData.videos).length} videos`);
         } catch (error) {
             console.warn('Error fetching real-time data, using local fallback:', error);
         } finally {
@@ -328,6 +334,50 @@ export class DataService {
         
         console.log('🔍 DEBUG: Data comparison complete');
     }
+
+    // Debug method to log data switching details
+    private debugDataSwitch(): void {
+        console.log('🔄 DEBUG: Data switching details...');
+        
+        const localData = {
+            times: rawViews.times.map(time => new Date(time)),
+            videos: rawViews.videos
+        };
+        
+        console.log('📊 Local data times:', localData.times.map(t => t.toISOString()));
+        console.log('📊 API data times:', this.currentData.times.map(t => t.toISOString()));
+        
+        console.log('📈 Local data length:', localData.times.length);
+        console.log('📈 API data length:', this.currentData.times.length);
+        
+        // Check for timezone differences
+        const localFirstTime = localData.times[0];
+        const apiFirstTime = this.currentData.times[0];
+        if (localFirstTime && apiFirstTime) {
+            console.log('🕐 Local first time:', localFirstTime.toISOString(), 'Local timezone offset:', localFirstTime.getTimezoneOffset());
+            console.log('🕐 API first time:', apiFirstTime.toISOString(), 'API timezone offset:', apiFirstTime.getTimezoneOffset());
+        }
+        
+        // Check for any video data differences
+        Object.keys(localData.videos).forEach(videoId => {
+            const localVideo = localData.videos[videoId as keyof typeof localData.videos];
+            const apiVideo = this.currentData.videos[videoId as keyof typeof this.currentData.videos];
+            
+            if (localVideo && apiVideo) {
+                const localLength = localVideo.youtube.length;
+                const apiLength = apiVideo.youtube.length;
+                console.log(`📺 ${videoId}: Local array length=${localLength}, API array length=${apiLength}`);
+                
+                if (localLength !== apiLength) {
+                    console.log(`⚠️  Array length mismatch for ${videoId}!`);
+                }
+            }
+        });
+        
+        console.log('🔄 DEBUG: Data switching details complete');
+    }
+
+
 
     private showProgressBar(): void {
         const progressBar = document.getElementById('api-progress-bar');
