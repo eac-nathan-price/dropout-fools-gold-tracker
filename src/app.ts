@@ -194,12 +194,14 @@ class ProducerStatsCalculator {
 // Main application class
 class ProducerTracker {
     currentPlatform: ExtendedPlatform;
+    currentVideoPlatform: ExtendedPlatform;
     producerChart: ChartType<'line', { x: Datelike; y: number; }[], unknown> | null;
     combinedVideoChart: ChartType<'line', { x: Datelike; y: number; }[], unknown> | null;
     videoCharts: Map<string, ChartType<'line', { x: Datelike; y: number; }[], unknown>>;
 
     constructor() {
         this.currentPlatform = 'all';
+        this.currentVideoPlatform = 'all';
         this.producerChart = null;
         this.combinedVideoChart = null;
         this.videoCharts = new Map();
@@ -222,10 +224,19 @@ class ProducerTracker {
                 const target = e.target as HTMLSelectElement;
                 this.currentPlatform = target.value as ExtendedPlatform;
                 this.renderProducerComparisonChart();
-                this.renderCombinedVideoChart();
                 this.renderProducerStats();
             });
         }
+
+        const videoPlatformFilter = document.getElementById('video-platform-filter') as HTMLSelectElement | null;
+        if (videoPlatformFilter) {
+            videoPlatformFilter.addEventListener('change', (e: Event) => {
+                const target = e.target as HTMLSelectElement;
+                this.currentVideoPlatform = target.value as ExtendedPlatform;
+                this.renderCombinedVideoChart();
+            });
+        }
+
         document.querySelectorAll('.legend-item').forEach(item => {
             item.addEventListener('click', (e: Event) => {
                 const currentTarget = e.currentTarget as HTMLElement | null;
@@ -288,7 +299,7 @@ class ProducerTracker {
                 viewData.times,
                 viewData.times.map(time => {
                     const timeIndex = viewData.times.indexOf(time);
-                    return getPlatformViews(video, timeIndex).all;
+                    return getPlatformViews(video, timeIndex)[this.currentVideoPlatform];
                 })
             );
             return ChartManager.createDataset(data, {

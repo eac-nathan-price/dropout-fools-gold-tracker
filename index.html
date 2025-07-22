@@ -60,7 +60,16 @@
         <section class="combined-video-chart">
             <div class="chart-card large">
                 <div class="chart-header" style="padding-bottom: 16px; margin-bottom: 24px;">
-                    <h2>All Videos Total Views Over Time</h2>
+                    <h2>Video Comparison</h2>
+                    <div class="chart-controls">
+                        <label for="video-platform-filter">Platform:</label>
+                        <select id="video-platform-filter">
+                            <option value="all">All Platforms</option>
+                            <option value="youtube">YouTube Only</option>
+                            <option value="tiktok">TikTok Only</option>
+                            <option value="instagram">Instagram Only</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="chart-container-large">
                     <canvas id="combined-video-chart"></canvas>
