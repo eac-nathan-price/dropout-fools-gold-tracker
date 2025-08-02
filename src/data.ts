@@ -1,4 +1,4 @@
-import rawViews from './views.json' with { type: "json" };
+import rawViews from './views.min.json' with { type: "json" };
 
 // API endpoint for fetching view data
 const API_ENDPOINT = 'https://fg-api-server-746154731592.us-west1.run.app/viewcounts/flattened';
